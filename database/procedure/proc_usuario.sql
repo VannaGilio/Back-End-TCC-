@@ -1,19 +1,27 @@
+-- Inserir
 DELIMITER $
+DROP procedure IF EXISTS inserir_usuario;
 CREATE PROCEDURE inserir_usuario (
-	OUT p_id_usuario int,
-    IN p_credencial varchar(45),
+    IN p_credencial varchar(11),
     IN p_senha varchar(20),
-    IN p_nivel_acesso enum('aluno', 'professor', 'gestão')
+    IN p_nivel_usuario enum('aluno', 'professor', 'gestão')
 )
 BEGIN
 	INSERT INTO tbl_usuarios(
 		credencial,
         senha,
-        nivel_acesso
+        nivel_usuario
     )VALUES(
 		p_credencial,
         p_senha,
-        p_nivel_acesso
+        p_nivel_usuario
     );
-    SET p_id_usuario = last_insert_id();
+END$
+
+--Select
+DELIMITER $
+DROP procedure IF EXISTS listar_usuarios;
+CREATE PROCEDURE listar_usuarios()
+BEGIN
+	SELECT * FROM tbl_usuarios;
 END$

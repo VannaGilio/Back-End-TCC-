@@ -30,6 +30,39 @@ const inserirUsuario = async function (usuario, contentType) {
     }
 }
 
+const listarUsuarios = async function (){
+    try {
+        let result = await usuarioDAO.selectAllUsuario()
+        let dados = {}
+
+        if(result != false || typeof (result) == 'object'){
+            if(result.length > 0){
+                dados.status = true
+                dados.status_code = 200
+                dados.items = result.length
+                dados.usuarios = result
+
+                return dados
+            }else{
+                return message.ERROR_NOT_FOUND //404
+            }
+        }else{
+            return message.ERROR_INTERNAL_SERVER_MODEL //500
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER //500
+    }
+}
+
+// const buscarUsuario = async function (){
+//     try {
+//         if()
+//     } catch (error) {
+        
+//     }
+// }
+
 module.exports = {
-    inserirUsuario
+    inserirUsuario, 
+    listarUsuarios
 }

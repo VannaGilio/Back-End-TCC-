@@ -150,10 +150,44 @@ const atualizarUsuarioPorId = async function (id, usuario, contentType) {
     }
 }
 
+const loginUsuario = async function (usuario, contentType) {
+    try {
+        if( String(contentType).toLowerCase() == 'application/json'){
+            if( usuario.credencial == '' || usuario.credencial == undefined || usuario.credencial == null || usuario.credencial.length > 11 ||
+                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 && usuario.senha.length < 8
+            ){
+                return message.ERROR_REQUIRED_FIELDS // 400
+            }else{
+                let result = await usuarioDAO.loginUsuario(usuario)
+
+                console.log(result);
+                let dados = {}
+
+                if(result){
+                    dados.status = true
+                    dados.status_code = 200
+                    dados.items = result.length
+                    dados.usuario = result
+                    
+                    console.log(dados)
+                    return dados
+                }else{
+                    return message.ERROR_INTERNAL_SERVER_MODEL //201
+                }
+            }
+        }else{
+            return message.ERROR_CONTENT_TYPE //415
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 400
+    }
+}
+
 module.exports = {
     inserirUsuario, 
     listarUsuarios,
     buscarUsuarioPorId,
     excluirUsuarioPorId,
-    atualizarUsuarioPorId
+    atualizarUsuarioPorId,
+    loginUsuario
 }

@@ -54,15 +54,66 @@ const listarUsuarios = async function (){
     }
 }
 
-// const buscarUsuario = async function (){
-//     try {
-//         if()
-//     } catch (error) {
-        
-//     }
-// }
+const buscarUsuarioPorId = async function (id){
+    try {
+        if(id == '' || id == null || id == undefined || id.length <= 0 || isNaN(id)){
+            return message.ERROR_REQUIRED_FIELDS //400
+        }else{
+            let result = await usuarioDAO.selectByIdUsuario(id)
+            let dados = {}
+
+            if(result != false || typeof (result) == 'object'){
+                if(result.length > 0){
+                    dados.status = true
+                    dados.status_code = 200
+                    dados.usuarios = result
+    
+                    return dados
+                
+                }else{
+                    return message.ERROR_NOT_FOUND //404
+                }
+            }else{
+                return message.ERROR_INTERNAL_SERVER_MODEL //500
+            }
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER //500
+    }
+}
+
+const excluirUsuarioPorId = async function (id) {
+    try {
+        if(id == '' || id == null || id == undefined || id.length <= 0){
+            return message.ERROR_REQUIRED_FIELDS
+        }else{
+
+            let select = await usuarioDAO.selectByIdUsuario(parseInt(id))
+
+            if(select != false || typeof (select) == 'object'){
+                if(select.length > 0){
+                    let result = await usuarioDAO.deleteByIdUsuario(parseInt(id))
+
+                    if(result){
+                        return message.SUCCESS_DELETED_ITEM
+                    }else{
+                        return message.ERROR_INTERNAL_SERVER_MODEL
+                    }   
+                }else{
+                    return message.ERROR_NOT_FOUND
+                }
+            }else{
+                return message.ERROR_INTERNAL_SERVER_MODEL
+            }
+        } 
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER
+    }
+}
 
 module.exports = {
     inserirUsuario, 
-    listarUsuarios
+    listarUsuarios,
+    buscarUsuarioPorId,
+    excluirUsuarioPorId
 }

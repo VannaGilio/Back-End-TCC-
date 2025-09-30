@@ -5,8 +5,8 @@
    npm install express --save
    npm install body-parser --save
    npm install prisma --save
-   npx prisma init --save
-   npm install @prisma/client --save
+   npx prisma init
+   npm install @prisma/client
    npx prisma migrate dev 
 
    sinc schema.prisma:
@@ -45,6 +45,24 @@ app.post('/v1/analytica-ai/usuarios', async function (request, response){
 
 app.get('/v1/analytica-ai/usuarios', async function (request, response){
     let result = await controllerUsuario.listarUsuarios()
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/usuarios/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerUsuario.buscarUsuarioPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.delete('/v1/analytica-ai/usuarios/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerUsuario.excluirUsuarioPorId(id)
 
     response.status(result.status_code)
     response.json(result)

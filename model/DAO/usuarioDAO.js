@@ -75,10 +75,40 @@ const updateByIdUsuario = async function (usuario) {
     }
 }
 
+const loginUsuario = async function(usuario){
+    try {
+        let result = await prisma.$queryRaw`
+            CALL sp_login_usuario(${usuario.credencial}, ${usuario.senha})
+        `;
+        
+        const rows = result[0];
+
+        const usuarioFormatado = {
+            id_usuario: rows.f0,
+            credencial: rows.f1,
+            senha: rows.f2,
+            nivel_usuario: rows.f3,
+            id_gestao: rows.f4,
+            nome: rows.f5,
+            email: rows.f6,
+            telefone: rows.f7
+          };
+
+        if(result)
+            return usuarioFormatado
+        else
+            return false
+    } catch (error) {
+        return false
+    }
+}
+
+
 module.exports = {
     insertUsuario,
     selectAllUsuario,
     selectByIdUsuario,
     deleteByIdUsuario,
-    updateByIdUsuario
+    updateByIdUsuario,
+    loginUsuario
 }

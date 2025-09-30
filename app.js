@@ -81,6 +81,17 @@ app.put('/v1/analytica-ai/usuarios/:id', async function (request, response) {
     response.status(result.status_code)
     response.json(result)
 })
+
+app.post('/v1/analytica-ai/usuarios/login', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    let result = await controllerUsuario.loginUsuario(body, contentType)
+    
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

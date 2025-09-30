@@ -68,6 +68,19 @@ app.delete('/v1/analytica-ai/usuarios/:id', async function (request, response){
     response.json(result)
 })
 
+app.put('/v1/analytica-ai/usuarios/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerUsuario.atualizarUsuarioPorId(id, dadosBody, contentType)
+
+    console.log(result)
+    response.status(result.status_code)
+    response.json(result)
+})
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

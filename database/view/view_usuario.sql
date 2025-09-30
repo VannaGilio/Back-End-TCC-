@@ -1,6 +1,6 @@
 USE db_analytica_ai;
 
-CREATE VIEW listarUsuarios AS
+CREATE VIEW listar_usuarios AS
 SELECT
     id_usuario,
 	credencial,
@@ -18,7 +18,7 @@ SELECT
     email
 FROM tbl_aluno;
 
-CREATE VIEW buscarUsuarios AS
+CREATE VIEW buscar_usuario AS
 SELECT
     id_usuario,
 	credencial,
@@ -32,7 +32,7 @@ SELECT
     nome,
     data_nascimento,
     telefone,
-    email
+    email   
 FROM tbl_professor;
 
 CREATE VIEW buscarTurma AS
@@ -150,64 +150,160 @@ JOIN tbl_aluno ON tbl_recurso_aluno.id_aluno = tbl_aluno.id_aluno;
 
 
 CREATE VIEW buscarAtividade AS
-    id_atividade,
-    titulo,
-    descricao,
-    data_criacao,
-	id_materia,
-    id_professor,
-    id_categoria
-FROM tbl_atividade;
+SELECT
+    tbl_atividade.id_atividade,
+    tbl_atividade.titulo,
+    tbl_atividade.descricao,
+    tbl_atividade.data_criacao,
+	tbl_materia.id_materia,
+    tbl_materia.materia,
+    tbl_materia.cor_materia,
+    tbl_professor.id_professor,
+    tbl_professor.nome,
+    tbl_professor.data_nascimento,
+    tbl_professor.telefone,
+    tbl_professor.email,
+    tbl_professor.id_usuario,
+    tbl_categoria.id_categoria,
+    tbl_categoria.categoria
+FROM tbl_atividade
+JOIN tbl_materia ON tbl_atividade.id_materia = tbl_materia.id_materia
+JOIN tbl_professor ON tbl_atividade.id_professor= tbl_professor.id_professor
+JOIN tbl_categoria ON tbl_atividade.id_categoria= tbl_categoria.id_categoria;
+
 
 
 CREATE VIEW buscarAtividadeAluno AS
-    id_atividade_aluno,
-    id_atividade,
-    id_aluno
-FROM tbl_atividade_aluno;
+SELECT
+    tbl_atividade_aluno.id_atividade_aluno,
+    tbl_atividade.id_atividade,
+    tbl_atividade.titulo,
+    tbl_atividade.descricao,
+    tbl_atividade.data_criacao,
+	tbl_atividade.id_materia,
+    tbl_atividade.id_professor,
+    tbl_atividade.id_categoria,
+    tbl_aluno.id_aluno,
+    tbl_aluno.nome,
+    tbl_aluno.data_nascimento,
+    tbl_aluno.matricula,
+    tbl_aluno.telefone,
+    tbl_aluno.email,
+    tbl_aluno.id_usuario,
+    tbl_aluno.id_turma
+FROM tbl_atividade_aluno
+JOIN tbl_atividade ON tbl_atividade_aluno.id_atividade = tbl_atividade.id_atividade
+JOIN tbl_aluno ON tbl_atividade_aluno.id_aluno = tbl_aluno.id_;
+
 
 
 CREATE VIEW buscarFrequencia AS
-    id_frequencia,
-    presenca,
-    data_frequencia,
-    id_aluno,
-    id_materia
+    tbl_frequencia.id_frequencia,
+    tbl_frequencia.presenca,
+    tbl_frequencia.data_frequencia,
+    tbl_aluno.id_aluno,
+    tbl_aluno.nome,
+    tbl_aluno.data_nascimento,
+    tbl_aluno.matricula,
+    tbl_aluno.telefone,
+    tbl_aluno.email,
+    tbl_aluno.id_usuario,
+    tbl_aluno.id_turma
+    tbl_materia.id_materia,
+    tbl_materia.materia,
+    tbl_materia.cor_materia
 FROM tbl_frequencia;
+JOIN tbl_aluno ON tbl_frequencia.id_aluno = tbl_aluno.id_aluno
+JOIN tbl_materia ON tbl_frequencia.id_materia = tbl_materia.id_materia;
+
 
 CREATE VIEW buscarNota AS
-    id_nota,
-    nota,
-    id_atividade_aluno,
-    id_semestre
+    tbl_nota.id_nota,
+    tbl_nota.nota,
+    tbl_atividade_aluno.id_atividade_aluno,
+    tbl_atividade_aluno.id_atividade,
+    tbl_atividade_aluno.id_aluno,
+    tbl_semestre.id_semestre,
+    tbl_semestre.semestre
 FROM tbl_nota;
-
+JOIN tbl_atividade_aluno ON tbl_nota.id_atividade_aluno = tbl_atividade_aluno.id_atividade_aluno
+JOIN tbl_semestre ON tbl_nota.id_semestre = tbl_semestre.id_semestre;
 
 
 CREATE VIEW buscarObservacao AS
-    id_observacao,
-    descricao,
-    id_atividade,
-    id_aluno
-FROM tbl_observacao;
+SELECT
+    tbl_observacao.id_observacao,
+    tbl_observacao.descricao,
+    tbl_atividade.id_atividade,
+    tbl_atividade.titulo,
+    tbl_atividade.descricao,
+    tbl_atividade.data_criacao,
+	tbl_atividade.id_materia,
+    tbl_atividade.id_professor,
+    tbl_atividade.id_categoria
+    tbl_aluno.id_aluno,
+    tbl_aluno.nome,
+    tbl_aluno.data_nascimento,
+    tbl_aluno.matricula,
+    tbl_aluno.telefone,
+    tbl_aluno.email,
+    tbl_aluno.id_usuario,
+    tbl_aluno.id_turma
+FROM tbl_observacao
+JOIN tbl_aluno ON tbl_observacao.id_aluno = tbl_aluno.id_aluno
+JOIN tbl_atividade ON tbl_observacao.id_atividade = tbl_atividade.id_atividade;
+
 
 
 CREATE VIEW buscarInsigths AS
-    id_insights,
-    insights,
-    id_materia,
-    id_aluno,
-    id_professor
-FROM tbl_insights;
+SELECT
+    tbl_insights.id_insights,
+    tbl_insights.insights,
+    tbl_materia.id_materia,
+    tbl_materia.materia,
+    tbl_materia.cor_materia,
+    tbl_aluno.id_aluno,
+    tbl_aluno.nome,
+    tbl_aluno.data_nascimento,
+    tbl_aluno.matricula,
+    tbl_aluno.telefone,
+    tbl_aluno.email,
+    tbl_aluno.id_usuario,
+    tbl_aluno.id_turma,
+    tbl_professor.id_professor,
+    tbl_professor.nome,
+    tbl_professor.data_nascimento,
+    tbl_professor.telefone,
+    tbl_professor.email,
+    tbl_professor.id_usuario
+FROM tbl_insights
+JOIN tbl_materia ON tbl_insights.id_materia = tbl_materia.id_materia
+JOIN tbl_aluno ON tbl_insights.id_aluno = tbl_aluno.id_aluno
+JOIN tbl_professor ON tbl_insights.id_professor = tbl_professor.id_professor;
 
 CREATE VIEW buscarRelatorio AS
-    id_relatorio,
-    relatorio,
-    titulo,
-    data_criacao,
-    id_aluno,
-    id_professor,
-    id_materia 
+SELECT
+    tbl_relatorio.id_relatorio,
+    tbl_relatorio.relatorio,
+    tbl_relatorio.titulo,
+    tbl_relatorio.data_criacao,
+    tbl_aluno.id_aluno,
+    tbl_aluno.nome,
+    tbl_aluno.data_nascimento,
+    tbl_aluno.matricula,
+    tbl_aluno.telefone,
+    tbl_aluno.email,
+    tbl_aluno.id_usuario,
+    tbl_aluno.id_turma,
+    tbl_professor.id_professor,
+    tbl_professor.nome,
+    tbl_professor.data_nascimento,
+    tbl_professor.telefone,
+    tbl_professor.email,
+    tbl_professor.id_usuario,
+    tbl_materia.id_materia,
+    tbl_materia.materia,
+    tbl_materia.cor_materia
 FROM tbl_relatorio;
 
 

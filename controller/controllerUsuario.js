@@ -3,6 +3,7 @@ const message = require('../modulo/config.js')
 
 // Exportando DAO 
 const usuarioDAO = require('../model/DAO/usuarioDAO.js')
+const { application } = require('express')
 
 const inserirUsuario = async function (usuario, contentType) {
     try {
@@ -111,9 +112,48 @@ const excluirUsuarioPorId = async function (id) {
     }
 }
 
+const atualizarUsuarioPorId = async function (id, usuario, contentType) {
+    try {
+        if(contentType == 'application/json'){
+            if( id == '' || id == null || id == undefined || id.length <= 0 ||
+                usuario.credencial == '' || usuario.credencial == undefined || usuario.credencial == null || usuario.credencial.length > 11 ||
+                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 && usuario.senha.length < 8 ||
+                usuario.nivel_usuario != 'aluno' && usuario.nivel_usuario != 'professor' && usuario.nivel_usuario != 'gestão'){
+                    
+                return message.ERROR_REQUIRED_FIELDS
+            }else{
+                let select = await usuarioDAO.selectByIdUsuario(parseInt(id))
+
+                if (select != false || typeof (select) == 'object') {
+                    if (select.length > 0) {
+                        usuario.id_usuario = parseInt(id)
+                    
+                        let result = await usuarioDAO.updateByIdUsuario(usuario)
+
+                        if(result){
+                            return message.SUCCESS_UPDATED_ITEM
+                        }else{
+                            return message.ERROR_INTERNAL_SERVER_MODEL
+                        }
+                    }else{
+                        return message.ERROR_NOT_FOUND
+                    }
+                }else{
+                    return message.ERROR_INTERNAL_SERVER_MODEL
+                }
+            } 
+        }else{
+            return message.ERROR_CONTENT_TYPE
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER
+    }
+}
+
 module.exports = {
     inserirUsuario, 
     listarUsuarios,
     buscarUsuarioPorId,
-    excluirUsuarioPorId
+    excluirUsuarioPorId,
+    atualizarUsuarioPorId
 }

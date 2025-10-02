@@ -86,7 +86,6 @@ const loginUsuario = async function(usuario){
 
         const nivel_usuario = String(rows.f3).toLowerCase()
 
-        console.log(nivel_usuario)
         let usuarioFormatado = {};
 
         if (nivel_usuario === 'aluno') {
@@ -128,7 +127,6 @@ const loginUsuario = async function(usuario){
             }
         }
         
-        console.log(result)
         if(result)
             return usuarioFormatado
         else

@@ -1,23 +1,17 @@
 const message = require('../../modulo/config.js')
 
-const usuarioDAO = require('../../model/DAO/usuarioDAO/usuarioDAO.js')
+const semestreDAO = require('../../model/DAO//semestre/semestreDAO.js')
 const { application } = require('express')
 
-const inserirUsuario = async function (usuario, contentType) {
+const inserirSemestre = async function (semestre, contentType) {
     try {
         if( String(contentType).toLowerCase() == 'application/json'){
-            if( usuario.credencial == '' || usuario.credencial == undefined || usuario.credencial == null || usuario.credencial.length > 11 ||
-                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 && usuario.senha.length < 8 ||
-                // usuario.nivel_usuario == '' || usuario.nivel_usuario == undefined || usuario.nivel_usuario == null || 
-                usuario.nivel_usuario != 'aluno' && usuario.nivel_usuario != 'professor' && usuario.nivel_usuario != 'gestão'
-            ){
+            if( semestre.semestre == '' || semestre.semestre == undefined || semestre.semestre == null || semestre.semestre.length > 45){
                 return message.ERROR_REQUIRED_FIELDS // 400
             }else{
-                let result = await usuarioDAO.insertUsuario(usuario)
+                let result = await semestreDAO.insertSemestre(semestre)
     
-                if(result == "P2010"){
-                    return message.ERROR_CONFLICT //409
-                }else if(result){
+                if(result){
                     return message.SUCCESS_CREATED_ITEM // 201
                 }else{
                     return message.ERROR_INTERNAL_SERVER_MODEL //500
@@ -31,9 +25,9 @@ const inserirUsuario = async function (usuario, contentType) {
     }
 }
 
-const listarUsuarios = async function (){
+const listarSemestre = async function (){
     try {
-        let result = await usuarioDAO.selectAllUsuario()
+        let result = await semestreDAO.selectAllSemestres()
         let dados = {}
 
         if(result != false || typeof (result) == 'object'){
@@ -41,7 +35,7 @@ const listarUsuarios = async function (){
                 dados.status = true
                 dados.status_code = 200
                 dados.items = result.length
-                dados.usuarios = result
+                dados.semestres = result
 
                 return dados
             }else{
@@ -55,19 +49,19 @@ const listarUsuarios = async function (){
     }
 }
 
-const buscarUsuarioPorId = async function (id){
+const buscarSemestrePorId = async function (id){
     try {
         if(id == '' || id == null || id == undefined || id.length <= 0 || isNaN(id)){
             return message.ERROR_REQUIRED_FIELDS //400
         }else{
-            let result = await usuarioDAO.selectByIdUsuario(id)
+            let result = await semestreDAO.selectByIdSemestre(id)
             let dados = {}
 
             if(result != false || typeof (result) == 'object'){
                 if(result.length > 0){
                     dados.status = true
                     dados.status_code = 200
-                    dados.usuarios = result
+                    dados.semestres = result
     
                     return dados
                 
@@ -83,17 +77,17 @@ const buscarUsuarioPorId = async function (id){
     }
 }
 
-const excluirUsuarioPorId = async function (id) {
+const excluirSemestrePorId = async function (id) {
     try {
         if(id == '' || id == null || id == undefined || id.length <= 0){
             return message.ERROR_REQUIRED_FIELDS
         }else{
 
-            let select = await usuarioDAO.selectByIdUsuario(parseInt(id))
+            let select = await semestreDAO.selectByIdSemestre(parseInt(id))
 
             if(select != false || typeof (select) == 'object'){
                 if(select.length > 0){
-                    let result = await usuarioDAO.deleteByIdUsuario(parseInt(id))
+                    let result = await semestreDAO.deleteByIdSemestre(parseInt(id))
 
                     if(result){
                         return message.SUCCESS_DELETED_ITEM
@@ -112,23 +106,21 @@ const excluirUsuarioPorId = async function (id) {
     }
 }
 
-const atualizarUsuarioPorId = async function (id, usuario, contentType) {
+const atualizarSemestrePorId = async function (id, semestre, contentType) {
     try {
         if(contentType == 'application/json'){
             if( id == '' || id == null || id == undefined || id.length <= 0 ||
-                usuario.credencial == '' || usuario.credencial == undefined || usuario.credencial == null || usuario.credencial.length > 11 ||
-                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 && usuario.senha.length < 8 ||
-                usuario.nivel_usuario != 'aluno' && usuario.nivel_usuario != 'professor' && usuario.nivel_usuario != 'gestão'){
+                semestre.semestre == '' || semestre.semestre == undefined || semestre.semestre == null || semestre.semestre.length > 45 ){
                     
                 return message.ERROR_REQUIRED_FIELDS
             }else{
-                let select = await usuarioDAO.selectByIdUsuario(parseInt(id))
+                let select = await semestreDAO.selectByIdSemestre(parseInt(id))
 
                 if (select != false || typeof (select) == 'object') {
                     if (select.length > 0) {
-                        usuario.id_usuario = parseInt(id)
+                        semestre.id_semestre = parseInt(id)
                     
-                        let result = await usuarioDAO.updateByIdUsuario(usuario)
+                        let result = await semestreDAO.updateByIdSemestre(semestre)
 
                         if(result){
                             return message.SUCCESS_UPDATED_ITEM
@@ -150,42 +142,10 @@ const atualizarUsuarioPorId = async function (id, usuario, contentType) {
     }
 }
 
-const loginUsuario = async function (usuario, contentType) {
-    try {
-        if( String(contentType).toLowerCase() == 'application/json'){
-            if( usuario.credencial == '' || usuario.credencial == undefined || usuario.credencial == null || usuario.credencial.length > 11 ||
-                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 && usuario.senha.length < 8
-            ){
-                return message.ERROR_REQUIRED_FIELDS // 400
-            }else{
-                let result = await usuarioDAO.loginUsuario(usuario)
-
-                let dados = {}
-
-                if(result){
-                    dados.status = true
-                    dados.status_code = 200
-                    dados.items = result.length
-                    dados.usuario = result
-                    
-                    return dados
-                }else{
-                    return message.ERROR_NOT_FOUND
-                }
-            }
-        }else{
-            return message.ERROR_CONTENT_TYPE //415
-        }
-    } catch (error) {
-        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 400
-    }
-}
-
-module.exports = {
-    inserirUsuario, 
-    listarUsuarios,
-    buscarUsuarioPorId,
-    excluirUsuarioPorId,
-    atualizarUsuarioPorId,
-    loginUsuario
+module.exports ={
+    inserirSemestre,
+    listarSemestre,
+    buscarSemestrePorId,
+    excluirSemestrePorId,
+    atualizarSemestrePorId
 }

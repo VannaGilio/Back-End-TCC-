@@ -79,20 +79,54 @@ const loginUsuario = async function(usuario){
     try {
         let result = await prisma.$queryRaw`
             CALL sp_login_usuario(${usuario.credencial}, ${usuario.senha})
-        `;
-        
+        `
+        if (!result || result.length === 0) {
+            return false;
+        }
+
         const rows = result[0];
 
-        const usuarioFormatado = {
-            id_usuario: rows.f0,
-            credencial: rows.f1,
-            senha: rows.f2,
-            nivel_usuario: rows.f3,
-            id_gestao: rows.f4,
-            nome: rows.f5,
-            email: rows.f6,
-            telefone: rows.f7
-          };
+        const nivel_usuario = String(rows.f3).toLowerCase()
+        let usuarioFormatado = {};
+
+        if (nivel_usuario === 'aluno') {
+            usuarioFormatado = {
+                id_usuario: rows.f0,
+                credencial: rows.f1,
+                senha: rows.f2,
+                nivel_usuario: nivel_usuario,
+                id_aluno: rows.f4,
+                nome: rows.f5, 
+                email: rows.f6,
+                telefone: rows.f7,
+                data_nascimento: rows.f8,
+                matricula: rows.f9,
+                id_turma: rows.f10,
+            }
+        } else if (nivel_usuario === 'professor') {
+            usuarioFormatado = {
+                id_usuario: rows.f0,
+                credencial: rows.f1, 
+                senha: rows.f2,
+                nivel_usuario: nivel_usuario,
+                id_professor: rows.f4,
+                nome: rows.f5, 
+                email: rows.f6,
+                telefone: rows.f7,
+                data_nascimento: rows.f8
+            }
+        } else if (nivel_usuario === 'gestão') {
+            usuarioFormatado = {
+                id_usuario: rows.f0,
+                credencial: rows.f1,
+                senha: rows.f2, 
+                nivel_usuario: nivel_usuario,
+                id_gestao: rows.f4,
+                nome: rows.f5,
+                email: rows.f6,
+                telefone: rows.f7
+            }
+        }
 
         if(result)
             return usuarioFormatado

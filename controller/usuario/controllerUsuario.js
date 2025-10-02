@@ -1,8 +1,8 @@
 // Exportando status code
-const message = require('../modulo/config.js')
+const message = require('../../modulo/config.js')
 
 // Exportando DAO 
-const usuarioDAO = require('../model/DAO/usuarioDAO.js')
+const usuarioDAO = require('../../model/DAO/usuarioDAO/usuarioDAO.js')
 const { application } = require('express')
 
 const inserirUsuario = async function (usuario, contentType) {
@@ -160,7 +160,6 @@ const loginUsuario = async function (usuario, contentType) {
             }else{
                 let result = await usuarioDAO.loginUsuario(usuario)
 
-                console.log(result);
                 let dados = {}
 
                 if(result){
@@ -169,10 +168,9 @@ const loginUsuario = async function (usuario, contentType) {
                     dados.items = result.length
                     dados.usuario = result
                     
-                    console.log(dados)
                     return dados
                 }else{
-                    return message.ERROR_INTERNAL_SERVER_MODEL //201
+                    return message.ERROR_NOT_FOUND
                 }
             }
         }else{

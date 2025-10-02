@@ -31,7 +31,7 @@ app.use((request, response, next)=>{
     next()
 })
 
-const controllerUsuario = require('./controller/controllerUsuario.js')
+const controllerUsuario = require('./controller/usuario/controllerUsuario.js')
 
 app.post('/v1/analytica-ai/usuarios', async function (request, response){
     let contentType = request.headers['content-type']

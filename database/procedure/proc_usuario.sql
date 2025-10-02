@@ -84,86 +84,116 @@ END$
 
 -----------------------------------------------------------------------------------------------------
 
-DELIMITER $
+DELIMITER $$
 
-DROP PROCEDURE IF EXISTS sp_login_usuario;
+DROP PROCEDURE IF EXISTS sp_login_usuario $$
 
 CREATE PROCEDURE sp_login_usuario (
     IN p_credencial VARCHAR(11),
-    IN p_senha VARCHAR(20) -- Lembre-se: use HASHES de senha no ambiente real!
+    IN p_senha VARCHAR(20)
 )
 BEGIN
     -- Variável para armazenar o nível e o ID do usuário autenticado
     DECLARE v_nivel VARCHAR(10);
     DECLARE v_id_usuario INT;
-    
-    -- 1. Tenta encontrar e autenticar o usuário
-    -- Se as credenciais baterem, armazena o nível e o ID nas variáveis locais.
-    SELECT nivel_usuario, id_usuario INTO v_nivel, v_id_usuario
+
+    -- 1. Verifica se usuário existe
+    SELECT nivel_usuario, id_usuario
+    INTO v_nivel, v_id_usuario
     FROM tbl_usuarios
     WHERE credencial = p_credencial AND senha = p_senha;
-    
-    -- 2. Se o usuário foi encontrado (v_id_usuario NÃO é NULL), executa o SELECT específico
+
+    -- 2. Se encontrou usuário
     IF v_id_usuario IS NOT NULL THEN
-        
-        -- A. PERFIL ALUNO
+
+        -- Perfil aluno
         IF v_nivel = 'aluno' THEN
-            SELECT
-                U.id_usuario AS id_usuario,
-                U.credencial AS credencial,
-				U.senha AS senha,
-                U.nivel_usuario AS nivel_usuario,
-                A.id_aluno AS id_aluno,
-                A.nome AS nome,
-                A.email AS email,
-                A.telefone AS telefone,
-                A.data_nascimento AS data_nascimento,
-                A.matricula AS matricula,
-                A.id_turma AS id_turma
-            FROM
-                tbl_usuarios U
-            INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
-            WHERE U.id_usuario = v_id_usuario;
-            
-        -- B. PERFIL PROFESSOR
+            SELECT * 
+            FROM vw_login_aluno 
+            WHERE id_usuario = v_id_usuario;
+
+        -- Perfil professor
         ELSEIF v_nivel = 'professor' THEN
-            SELECT
-				U.id_usuario AS id_usuario,
-                U.credencial AS credencial,
-				U.senha AS senha,
-                U.nivel_usuario AS nivel_usuario,
-                P.id_professor AS id_professor,
-                P.nome AS nome,
-                P.email AS email,
-                P.telefone AS telefone,
-                P.data_nascimento AS data_nascimento
-            FROM
-                tbl_usuarios U
-            INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
-            WHERE U.id_usuario = v_id_usuario;
-            
-        -- C. PERFIL GESTÃO
+            SELECT * 
+            FROM vw_login_professor 
+            WHERE id_usuario = v_id_usuario;
+
+        -- Perfil gestão
         ELSEIF v_nivel = 'gestão' THEN
-            SELECT
-                U.id_usuario AS id_usuario,
-                U.credencial AS credencial,
-				U.senha AS senha,
-                U.nivel_usuario AS nivel_usuario,
-                G.id_gestao AS id_gestao,
-                G.nome AS nome,
-                G.email AS email,
-                G.telefone AS telefone
-            FROM
-                tbl_usuarios U
-            INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
-            WHERE U.id_usuario = v_id_usuario;
-                
+            SELECT * 
+            FROM vw_login_gestao 
+            WHERE id_usuario = v_id_usuario;
         END IF;
-    
-    -- 3. Se as credenciais não bateram
-    ELSE
-        -- Retorna um resultado vazio (ou uma linha de erro que seu backend pode capturar)
-        SELECT NULL AS autenticacao_falhou;
     END IF;
-    
+END $$
+
+
+------------------------
+
+DELIMITER $
+DROP PROCEDURE IF EXISTS sp_login_usuario;
+CREATE PROCEDURE sp_login_usuario (
+IN p_credencial VARCHAR(11),
+IN p_senha VARCHAR(20) -- Lembre-se: use HASHES de senha no ambiente real!
+)
+BEGIN
+-- Variável para armazenar o nível e o ID do usuário autenticado
+DECLARE v_nivel VARCHAR(10);
+DECLARE v_id_usuario INT;
+-- 1. Tenta encontrar e autenticar o usuário
+-- Se as credenciais baterem, armazena o nível e o ID nas variáveis locais.
+SELECT nivel_usuario, id_usuario INTO v_nivel, v_id_usuario
+FROM tbl_usuarios
+WHERE credencial = p_credencial AND senha = p_senha;
+-- 2. Se o usuário foi encontrado (v_id_usuario NÃO é NULL), executa o SELECT específico
+IF v_id_usuario IS NOT NULL THEN
+-- A. PERFIL ALUNO
+IF v_nivel = 'aluno' THEN
+SELECT
+U.id_usuario,
+U.credencial,
+U.nivel_usuario,
+A.id_aluno,
+A.nome,
+A.email,
+A.telefone,
+
+A.data_nascimento,
+A.matricula,
+A.id_turma
+FROM
+tbl_usuarios U
+INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
+WHERE U.id_usuario = v_id_usuario;
+-- B. PERFIL PROFESSOR
+ELSEIF v_nivel = 'professor' THEN
+SELECT
+U.id_usuario,
+U.credencial,
+U.nivel_usuario,
+P.id_professor,
+P.nome,
+P.email,
+P.telefone,
+P.data_nascimento
+FROM
+tbl_usuarios U
+INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
+WHERE U.id_usuario = v_id_usuario;
+-- C. PERFIL GESTÃO
+ELSEIF v_nivel = 'gestão' THEN
+SELECT
+U.id_usuario,
+U.credencial,
+U.nivel_usuario,
+G.id_gestao,
+G.nome,
+G.email,
+G.telefone
+FROM
+tbl_usuarios U
+INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
+WHERE U.id_usuario = v_id_usuario;
+END IF;
+END IF;
 END$

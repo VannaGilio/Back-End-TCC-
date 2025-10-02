@@ -310,3 +310,55 @@ JOIN tbl_professor ON tbl_relatorio.id_professor = tbl_professor.id_professor
 JOIN tbl_materia ON tbl_relatorio.id_materia = tbl_materia.id_materia;
 
 
+-- view usuario gestão
+CREATE OR REPLACE VIEW vw_login_gestao AS
+SELECT
+    U.id_usuario AS id_usuario,
+    U.credencial AS credencial,
+    U.senha AS senha,
+    U.nivel_usuario AS nivel_usuario,
+    G.id_gestao AS id_gestao,
+    G.nome AS nome,
+    G.email AS email,
+    G.telefone AS telefone
+FROM
+    tbl_usuarios U
+INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
+WHERE U.nivel_usuario = 'gestão';
+
+-- view usuario professor
+-- View para login de PROFESSOR
+CREATE OR REPLACE VIEW vw_login_professor AS
+SELECT
+    U.id_usuario AS id_usuario,
+    U.credencial AS credencial,
+    U.senha AS senha,
+    U.nivel_usuario AS nivel_usuario,
+    P.id_professor AS id_professor,
+    P.nome AS nome,
+    P.email AS email,
+    P.telefone AS telefone,
+    P.data_nascimento AS data_nascimento
+FROM
+    tbl_usuarios U
+INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
+WHERE U.nivel_usuario = 'professor';
+
+-- view usuario aluno
+CREATE OR REPLACE VIEW vw_login_aluno AS
+SELECT
+    U.id_usuario AS id_usuario,
+    U.credencial AS credencial,
+    U.senha AS senha,
+    U.nivel_usuario AS nivel_usuario,
+    A.id_aluno AS id_aluno,
+    A.nome AS nome,
+    A.email AS email,
+    A.telefone AS telefone,
+    A.data_nascimento AS data_nascimento,
+    A.matricula AS matricula,
+    A.id_turma AS id_turma
+FROM
+    tbl_usuarios U
+INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
+WHERE U.nivel_usuario = 'aluno';

@@ -1,18 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
+const message = require('../../../modulo/config.js')
 
 const insertUsuario = async function(usuario){
     try {
         let result = await prisma.$executeRaw`
             CALL inserir_usuario(${usuario.credencial}, ${usuario.senha}, ${usuario.nivel_usuario})
-        `;
+        `
+
+        return true
         
-        if(result > 0)
-            return true
-        else
-            return false
     } catch (error) {
-        console.error(error)
+        if(error.code == "P2010"){
+            return error.code
+        }
         return false
     }
 }
@@ -44,14 +45,12 @@ const deleteByIdUsuario = async function (id) {
         let sql = `delete from tbl_usuarios where id_usuario = ${id};`
 
         let result = await prisma.$executeRawUnsafe(sql)
-        console.log(result)
 
         if(result)
             return true
         else
             return false
     } catch (error) {
-        console.error(error)
         return false
     }
 }
@@ -65,7 +64,6 @@ const updateByIdUsuario = async function (usuario) {
                                             where id_usuario = ${usuario.id_usuario};`
 
         let result = await prisma.$executeRawUnsafe(sql)
-        console.log(result)
         if(result)
             return true
         else
@@ -87,6 +85,8 @@ const loginUsuario = async function(usuario){
         const rows = result[0];
 
         const nivel_usuario = String(rows.f3).toLowerCase()
+
+        console.log(nivel_usuario)
         let usuarioFormatado = {};
 
         if (nivel_usuario === 'aluno') {
@@ -127,7 +127,8 @@ const loginUsuario = async function(usuario){
                 telefone: rows.f7
             }
         }
-
+        
+        console.log(result)
         if(result)
             return usuarioFormatado
         else

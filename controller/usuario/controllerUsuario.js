@@ -17,17 +17,19 @@ const inserirUsuario = async function (usuario, contentType) {
             }else{
                 let result = await usuarioDAO.insertUsuario(usuario)
     
-                if(result){
+                if(result == "P2010"){
+                    return message.ERROR_CONFLICT //409
+                }else if(result){
                     return message.SUCCESS_CREATED_ITEM // 201
                 }else{
-                    return message.ERROR_INTERNAL_SERVER_MODEL //201
+                    return message.ERROR_INTERNAL_SERVER_MODEL //500
                 }
             }
         }else{
             return message.ERROR_CONTENT_TYPE //415
         }
     } catch (error) {
-        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 400
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 500
     }
 }
 

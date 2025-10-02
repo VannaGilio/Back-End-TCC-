@@ -8,7 +8,7 @@ SELECT
     nivel_usuario
 FROM tbl_usuarios;
 
-CREATE VIEW buscarAluno AS
+CREATE VIEW buscar_aluno AS
 SELECT
     id_aluno,
     nome,
@@ -26,7 +26,7 @@ SELECT
     nivel_usuario
 FROM tbl_usuarios;
 
-CREATE VIEW buscarProfessor AS
+CREATE VIEW buscar_professor AS
 SELECT
     id_professor,
     nome,
@@ -35,20 +35,20 @@ SELECT
     email   
 FROM tbl_professor;
 
-CREATE VIEW buscarTurma AS
+CREATE VIEW buscar_turma AS
 SELECT
     id_turma,
     turma
 FROM tbl_turma;
 
-CREATE VIEW buscarMateria AS
+CREATE VIEW buscar_materia AS
 SELECT
     id_materia,
     materia,
     cor_materia
 FROM tbl_materia;
 
-CREATE VIEW buscarSemestre AS
+CREATE VIEW buscar_semestre AS
 SELECT
     id_semestre,
     semestre

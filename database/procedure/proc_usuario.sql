@@ -85,7 +85,7 @@ END$
 -----------------------------------------------------------------------------------------------------
 
 DELIMITER $$
-
+-- LOGIN COM VIEW
 DROP PROCEDURE IF EXISTS sp_login_usuario $$
 
 CREATE PROCEDURE sp_login_usuario (
@@ -152,6 +152,7 @@ IF v_nivel = 'aluno' THEN
 SELECT
 U.id_usuario,
 U.credencial,
+U.senha,
 U.nivel_usuario,
 A.id_aluno,
 A.nome,
@@ -170,6 +171,7 @@ ELSEIF v_nivel = 'professor' THEN
 SELECT
 U.id_usuario,
 U.credencial,
+U.senha,
 U.nivel_usuario,
 P.id_professor,
 P.nome,
@@ -185,6 +187,7 @@ ELSEIF v_nivel = 'gestão' THEN
 SELECT
 U.id_usuario,
 U.credencial,
+U.senha,
 U.nivel_usuario,
 G.id_gestao,
 G.nome,
@@ -195,5 +198,10 @@ tbl_usuarios U
 INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
 WHERE U.id_usuario = v_id_usuario;
 END IF;
+-- 3. Se as credenciais não bateram
+ELSE
+
+-- Retorna um resultado vazio (ou uma linha de erro que seu backend pode capturar)
+SELECT NULL AS autenticacao_falhou;
 END IF;
 END$

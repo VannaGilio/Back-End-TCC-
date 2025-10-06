@@ -2,10 +2,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
 const message = require('../../../modulo/config.js')
 
-const insertSemestre = async function(semestre){
+const insertTurma = async function(turma){
     try {
         let result = await prisma.$executeRaw`
-            CALL inserir_semestre(${semestre.semestre})
+            CALL inserir_turma(${turma.turma})
         `
         if(result)
             return true
@@ -16,10 +16,10 @@ const insertSemestre = async function(semestre){
     }
 }
 
-const selectAllSemestres = async function(){
+const selectAllTurmas = async function(){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_semestre;
+            select * from buscar_turma;
         `
         return result
     } catch (error) {
@@ -27,10 +27,10 @@ const selectAllSemestres = async function(){
     }
 }
 
-const selectByIdSemestre = async function(id){
+const selectByIdTurma = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_semestre WHERE id_semestre = ${id}
+            select * from buscar_turma WHERE id_turma = ${id}
         `
         return result
     } catch (error) {
@@ -38,9 +38,9 @@ const selectByIdSemestre = async function(id){
     }
 }
 
-const deleteByIdSemestre = async function (id) {
+const deleteByIdTurma = async function (id) {
     try {
-        let sql = `delete from tbl_semestre where id_semestre = ${id};`
+        let sql = `delete from tbl_turma where id_turma = ${id};`
 
         let result = await prisma.$executeRawUnsafe(sql)
 
@@ -53,11 +53,11 @@ const deleteByIdSemestre = async function (id) {
     }
 }
 
-const updateByIdSemestre = async function (semestre) {
+const updateByIdTurma = async function (turma) {
     try {
-        let sql = `update tbl_semestre set  semestre = '${semestre.semestre}'
+        let sql = `update tbl_turma set  turma = '${turma.turma}'
                                             
-                                            where id_semestre = ${semestre.id_semestre};`
+                                            where id_turma = ${turma.id_turma};`
 
         let result = await prisma.$executeRawUnsafe(sql)
 
@@ -72,9 +72,9 @@ const updateByIdSemestre = async function (semestre) {
 
 
 module.exports ={
-    insertSemestre,
-    selectAllSemestres,
-    selectByIdSemestre,
-    deleteByIdSemestre,
-    updateByIdSemestre
+    insertTurma,
+    selectAllTurmas,
+    selectByIdTurma,
+    deleteByIdTurma,
+    updateByIdTurma
 }

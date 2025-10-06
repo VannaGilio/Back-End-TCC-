@@ -197,6 +197,58 @@ app.put('/v1/analytica-ai/categoria/:id', async function (request, response) {
     response.json(result)
 })
 
+/*********TURMA*********/
+
+const controllerTurma= require('./controller/turma/controllerTurma.js')
+
+app.post('/v1/analytica-ai/turma', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    let result = await controllerTurma.inserirTurma(body, contentType)
+    
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/turma', async function (request, response){
+    let result = await controllerTurma.listarTurma()
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/turma/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerTurma.buscarTurmaPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.delete('/v1/analytica-ai/turma/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerTurma.excluirTurmaPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.put('/v1/analytica-ai/turma/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerTurma.atualizarTurmaPorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

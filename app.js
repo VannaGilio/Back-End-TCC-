@@ -249,6 +249,58 @@ app.put('/v1/analytica-ai/turma/:id', async function (request, response) {
     response.json(result)
 })
 
+/*********MATERIA*********/
+
+const controllerMateria= require('./controller/materia/controllerMateria.js')
+
+app.post('/v1/analytica-ai/materia', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    let result = await controllerMateria.inserirMateria(body, contentType)
+    
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/materia', async function (request, response){
+    let result = await controllerMateria.listarMateria()
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/materia/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerMateria.buscarMateriaPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.delete('/v1/analytica-ai/materia/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerMateria.excluirMateriaPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.put('/v1/analytica-ai/materia/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerMateria.atualizarMateriaPorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

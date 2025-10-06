@@ -1,15 +1,15 @@
 const message = require('../../modulo/config.js')
 
-const semestreDAO = require('../../model/DAO/semestre/semestreDAO.js')
+const categoriaDAO = require('../../model/DAO/categoria/categoriaDAO.js')
 const { application } = require('express')
 
-const inserirSemestre = async function (semestre, contentType) {
+const inserirCategoria = async function (categoria, contentType) {
     try {
         if( String(contentType).toLowerCase() == 'application/json'){
-            if( semestre.semestre == '' || semestre.semestre == undefined || semestre.semestre == null || semestre.semestre.length > 45){
+            if( categoria.categoria == '' || categoria.categoria == undefined || categoria.categoria == null || categoria.categoria.length > 45){
                 return message.ERROR_REQUIRED_FIELDS // 400
             }else{
-                let result = await semestreDAO.insertSemestre(semestre)
+                let result = await categoriaDAO.insertCategoria(categoria)
     
                 if(result){
                     return message.SUCCESS_CREATED_ITEM // 201
@@ -25,9 +25,9 @@ const inserirSemestre = async function (semestre, contentType) {
     }
 }
 
-const listarSemestre = async function (){
+const listarCategoria = async function (){
     try {
-        let result = await semestreDAO.selectAllSemestres()
+        let result = await categoriaDAO.selectAllCategorias()
         let dados = {}
 
         if(result != false || typeof (result) == 'object'){
@@ -35,7 +35,7 @@ const listarSemestre = async function (){
                 dados.status = true
                 dados.status_code = 200
                 dados.items = result.length
-                dados.semestres = result
+                dados.categorias = result
 
                 return dados
             }else{
@@ -49,19 +49,19 @@ const listarSemestre = async function (){
     }
 }
 
-const buscarSemestrePorId = async function (id){
+const buscarCategoriaPorId = async function (id){
     try {
         if(id == '' || id == null || id == undefined || id.length <= 0 || isNaN(id)){
             return message.ERROR_REQUIRED_FIELDS //400
         }else{
-            let result = await semestreDAO.selectByIdSemestre(id)
+            let result = await categoriaDAO.selectByIdCategoria(id)
             let dados = {}
 
             if(result != false || typeof (result) == 'object'){
                 if(result.length > 0){
                     dados.status = true
                     dados.status_code = 200
-                    dados.semestres = result
+                    dados.categorias = result
     
                     return dados
                 
@@ -77,17 +77,17 @@ const buscarSemestrePorId = async function (id){
     }
 }
 
-const excluirSemestrePorId = async function (id) {
+const excluirCategoriaPorId = async function (id) {
     try {
         if(id == '' || id == null || id == undefined || id.length <= 0){
             return message.ERROR_REQUIRED_FIELDS
         }else{
 
-            let select = await semestreDAO.selectByIdSemestre(parseInt(id))
+            let select = await categoriaDAO.selectByIdCategoria(parseInt(id))
 
             if(select != false || typeof (select) == 'object'){
                 if(select.length > 0){
-                    let result = await semestreDAO.deleteByIdSemestre(parseInt(id))
+                    let result = await categoriaDAO.deleteByIdCaterogia(parseInt(id))
 
                     if(result){
                         return message.SUCCESS_DELETED_ITEM
@@ -106,21 +106,21 @@ const excluirSemestrePorId = async function (id) {
     }
 }
 
-const atualizarSemestrePorId = async function (id, semestre, contentType) {
+const atualizarCategoriaPorId = async function (id, categoria, contentType) {
     try {
         if(contentType == 'application/json'){
             if( id == '' || id == null || id == undefined || id.length <= 0 ||
-                semestre.semestre == '' || semestre.semestre == undefined || semestre.semestre == null || semestre.semestre.length > 45 ){
+                categoria.categoria == '' || categoria.categoria == undefined || categoria.categoria == null || categoria.categoria.length > 45 ){
                     
                 return message.ERROR_REQUIRED_FIELDS
             }else{
-                let select = await semestreDAO.selectByIdSemestre(parseInt(id))
+                let select = await categoriaDAO.selectByIdCategoria(parseInt(id))
 
                 if (select != false || typeof (select) == 'object') {
                     if (select.length > 0) {
-                        semestre.id_semestre = parseInt(id)
+                        categoria.id_categoria = parseInt(id)
                     
-                        let result = await semestreDAO.updateByIdSemestre(semestre)
+                        let result = await categoriaDAO.updateByIdCategoria(categoria)
 
                         if(result){
                             return message.SUCCESS_UPDATED_ITEM
@@ -142,10 +142,10 @@ const atualizarSemestrePorId = async function (id, semestre, contentType) {
     }
 }
 
-module.exports ={
-    inserirSemestre,
-    listarSemestre,
-    buscarSemestrePorId,
-    excluirSemestrePorId,
-    atualizarSemestrePorId
+module.exports = {
+    inserirCategoria,
+    listarCategoria,
+    buscarCategoriaPorId,
+    atualizarCategoriaPorId,
+    excluirCategoriaPorId
 }

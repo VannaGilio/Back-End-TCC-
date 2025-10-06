@@ -55,7 +55,7 @@ SELECT
 FROM tbl_semestre;
 
 
-CREATE VIEW buscarCategoria AS 
+CREATE VIEW buscar_categoria AS 
 SELECT
     id_categoria,
     categoria

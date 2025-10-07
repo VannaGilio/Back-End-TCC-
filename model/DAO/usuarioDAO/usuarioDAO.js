@@ -3,13 +3,15 @@ const prisma = new PrismaClient()
 const message = require('../../../modulo/config.js')
 
 const insertUsuario = async function(usuario){
-    try {
+        try {
         let result = await prisma.$executeRaw`
             CALL inserir_usuario(${usuario.credencial}, ${usuario.senha}, ${usuario.nivel_usuario})
         `
 
-        return true
-        
+        if(result)
+            return true
+        else
+            return false
     } catch (error) {
         if(error.code == "P2010"){
             return error.code
@@ -32,7 +34,7 @@ const selectAllUsuario = async function(){
 const selectByIdUsuario = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_usuario WHERE id_usuario = ${id}
+            select * from listar_usuarios WHERE id_usuario = ${id}
         `
         return result
     } catch (error) {

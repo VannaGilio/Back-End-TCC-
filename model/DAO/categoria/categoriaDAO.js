@@ -1,6 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
-const message = require('../../../modulo/config.js');
 
 const insertCategoria = async function(categoria){
     try {

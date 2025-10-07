@@ -322,6 +322,15 @@ app.get('/v1/analytica-ai/alunos', async function (request, response){
     response.json(result)
 })
 
+app.get('/v1/analytica-ai/aluno/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerAluno.buscarAlunoPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

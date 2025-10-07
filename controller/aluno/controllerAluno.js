@@ -4,10 +4,11 @@ const alunoDAO = require('../../model/DAO/aluno/alunoDAO.js')
 const inserirAluno = async function (aluno, contentType) {
     try {
         if( String(contentType) == 'application/json'){
-            if( aluno.id_usuario == '' || aluno.id_usuario == undefined || aluno.id_usuario == null || aluno.id_usuario.length < 0 ||
+            if( aluno.credencial == '' || aluno.credencial == undefined || aluno.credencial == null || aluno.credencial.length > 12 ||
                 aluno.nome == '' || aluno.nome == undefined || aluno.nome == null || aluno.nome.length > 80 ||
                 aluno.data_nascimento == '' || aluno.data_nascimento == undefined || aluno.data_nascimento == null ||
                 aluno.matricula == '' || aluno.matricula == undefined || aluno.matricula == null || aluno.matricula.length > 12 ||
+                // aluno.matriculla != aluno.credencial ||
                 aluno.telefone == '' || aluno.telefone == undefined || aluno.telefone == null || aluno.telefone.length > 14 ||
                 aluno.email == '' || aluno.email == undefined || aluno.email == null || aluno.email.length > 45 ||
                 aluno.id_turma == '' || aluno.id_turma == undefined || aluno.id_turma == null || aluno.id_turma.length < 0
@@ -46,10 +47,18 @@ const listarAlunos = async function(){
         turma: {
           id_turma: item.id_turma,
           nome_turma: item.turma
+        },
+        usuario: {
+            id_usuario: item.id_usuario,
+            credencial: item.credencial
         }
       }))
   
-      alunos.forEach(a => delete a.id_turma)
+      alunos.forEach(a => {
+        delete a.id_turma
+        delete a.id_usuario
+        delete a.credencial 
+      })
   
       let dados = {
         status: true,
@@ -65,7 +74,39 @@ const listarAlunos = async function(){
     }
 }
 
+const buscarAlunoPorId = async function(id){
+    try {
+      let result = await alunoDAO.selectByIdAluno(id)
+  
+      if (!result || result.length === 0) {
+        return message.ERROR_NOT_FOUND
+      }
+  
+      let aluno = {
+        ...result[0],  
+        turma: {
+          id_turma: result[0].id_turma,
+          turma: result[0].turma
+        }
+      }
+  
+      delete aluno.id_turma
+  
+      let dados = {
+        status: true,
+        status_code: 200,
+        aluno
+      }
+      
+      return dados
+  
+    } catch (error) {
+      return message.ERROR_INTERNAL_SERVER_CONTROLLER
+    }
+}
+
 module.exports = {
     inserirAluno,
-    listarAlunos
+    listarAlunos,
+    buscarAlunoPorId
 }

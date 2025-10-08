@@ -5,7 +5,7 @@ const message = require('../../../modulo/config.js')
 const insertSemestre = async function(semestre){
     try {
         let result = await prisma.$executeRaw`
-            CALL inserir_semestre(${semestre.semestre})
+            CALL sp_inserir_semestre(${semestre.semestre})
         `
         if(result)
             return true
@@ -19,7 +19,7 @@ const insertSemestre = async function(semestre){
 const selectAllSemestres = async function(){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_semestre;
+            select * from vw_buscar_semestre;
         `
         return result
     } catch (error) {
@@ -30,7 +30,7 @@ const selectAllSemestres = async function(){
 const selectByIdSemestre = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_semestre WHERE id_semestre = ${id}
+            select * from vw_buscar_semestre WHERE id_semestre = ${id}
         `
         return result
     } catch (error) {

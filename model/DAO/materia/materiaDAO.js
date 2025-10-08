@@ -5,7 +5,7 @@ const message = require('../../../modulo/config.js')
 const insertMateria = async function(materia){
     try {
         let result = await prisma.$executeRaw`
-            CALL inserir_materia(${materia.materia}, ${materia.cor_materia})
+            CALL sp_inserir_materia(${materia.materia}, ${materia.cor_materia})
         `
         if(result)
             return true
@@ -19,7 +19,7 @@ const insertMateria = async function(materia){
 const selectAllMateria = async function(){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_materia;
+            select * from vw_buscar_materia;
         `
         return result
     } catch (error) {
@@ -30,7 +30,7 @@ const selectAllMateria = async function(){
 const selectByIdMateria = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_materia WHERE id_materia = ${id}
+            select * from vw_buscar_materia WHERE id_materia = ${id}
         `
         return result
     } catch (error) {

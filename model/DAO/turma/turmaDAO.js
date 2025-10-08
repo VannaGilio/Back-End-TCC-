@@ -5,7 +5,7 @@ const message = require('../../../modulo/config.js')
 const insertTurma = async function(turma){
     try {
         let result = await prisma.$executeRaw`
-            CALL inserir_turma(${turma.turma})
+            CALL sp_inserir_turma(${turma.turma})
         `
         if(result)
             return true
@@ -19,7 +19,7 @@ const insertTurma = async function(turma){
 const selectAllTurmas = async function(){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_turma;
+            select * from vw_buscar_turma;
         `
         return result
     } catch (error) {
@@ -30,7 +30,7 @@ const selectAllTurmas = async function(){
 const selectByIdTurma = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_turma WHERE id_turma = ${id}
+            select * from vw_buscar_turma WHERE id_turma = ${id}
         `
         return result
     } catch (error) {

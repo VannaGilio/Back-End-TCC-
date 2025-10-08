@@ -5,7 +5,7 @@ const message = require('../../../modulo/config.js')
 const insertUsuario = async function(usuario){
         try {
         let result = await prisma.$executeRaw`
-            CALL inserir_usuario(${usuario.credencial}, ${usuario.senha}, ${usuario.nivel_usuario})
+            CALL sp_inserir_usuario(${usuario.credencial}, ${usuario.senha}, ${usuario.nivel_usuario})
         `
 
         if(result)
@@ -23,7 +23,7 @@ const insertUsuario = async function(usuario){
 const selectAllUsuario = async function(){
     try {
         let result = await prisma.$queryRaw`
-            select * from listar_usuarios;
+            select * from vw_buscar_usuarios;
         `
         return result
     } catch (error) {
@@ -34,7 +34,7 @@ const selectAllUsuario = async function(){
 const selectByIdUsuario = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from listar_usuarios WHERE id_usuario = ${id}
+            select * from vw_buscar_usuarios WHERE id_usuario = ${id}
         `
         return result
     } catch (error) {

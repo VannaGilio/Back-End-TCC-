@@ -6,7 +6,13 @@ const ERROR_CONTENT_TYPE = {status: false, status_code: 415, message: "Não foi 
 const ERROR_NOT_FOUND = {status: false, status_code: 404, message: "Recurso solicitado não encontrado."}
 const ERROR_CONFLICT = {status: false, status_code: 409, message: "Usuário já existe"}
 
+const ERROR_CREDENTIAL_INCOMPATIBLE = {status: false, status_code: 400, message: "A credencial deve ser igual à matrícula"}
+
+const CREDENTIAL_CONFLICT = {status: false, status_code: 409, message: "Este usuário já existe"}
+const EMAIL_CONFLICT = {status: false, status_code: 409, message: "Este e-mail já está cadastrado"}
+
 const SUCCESS_CREATED_ITEM = {status: true, status_code: 201, message: "Item criado com sucesso!!!"}
+const SUCCESS_ALUNO_CREATED = {status: true, status_code: 201, message: "Aluno cadastrado com sucesso!!!"}
 const SUCCESS_DELETED_ITEM = {status: true, status_code: 200, message: "Item excluído com sucesso!!!"}
 const SUCCESS_UPDATED_ITEM = {status: true, status_code: 200, message: "Item atualizado com sucesso!!"}
 
@@ -20,5 +26,9 @@ module.exports = {
     ERROR_NOT_FOUND,
     SUCCESS_DELETED_ITEM,
     SUCCESS_UPDATED_ITEM,
-    ERROR_CONFLICT
+    ERROR_CONFLICT,
+    ERROR_CREDENTIAL_INCOMPATIBLE,
+    CREDENTIAL_CONFLICT,
+    EMAIL_CONFLICT,
+    SUCCESS_ALUNO_CREATED
 }

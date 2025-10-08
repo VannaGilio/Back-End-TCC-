@@ -257,161 +257,338 @@ CREATE TABLE tbl_relatorio (
         REFERENCES tbl_materia (id_materia)
 );
 
--- ----------------------------------------------------------
+------------------------------------------------------------
+
+-- INSERIR USUARIO
+DELIMITER $
+DROP procedure IF EXISTS sp_inserir_usuario;
+CREATE PROCEDURE sp_inserir_usuario (
+    IN p_credencial varchar(11),
+    IN p_senha varchar(20),
+    IN p_nivel_usuario enum('aluno', 'professor', 'gestão')
+)
+BEGIN
+	INSERT INTO tbl_usuarios(
+		credencial,
+        senha,
+        nivel_usuario
+    )VALUES(
+		p_credencial,
+        p_senha,
+        p_nivel_usuario
+    );
+END$
+
+-- INSERIR SEMESTRE 
+DELIMITER $   
+DROP PROCEDURE IF EXISTS sp_inserir_semestre; 
+CREATE PROCEDURE sp_inserir_semestre (   
+    IN p_semestre varchar(45)   
+) BEGIN 
+    INSERT INTO tbl_semestre(   
+        semestre   
+    )VALUES(
+        p_semestre 
+    );   
+END$ 
+
+-- INSERIR CATEGORIA 
+DELIMITER $
+DROP PROCEDURE IF EXISTS sp_inserir_categoria;
+CREATE PROCEDURE sp_inserir_categoria (
+	IN p_categoria varchar(45)
+) BEGIN
+	INSERT INTO tbl_categoria(		
+		categoria
+    )VALUES(
+		p_categoria
+    );
+END$
+
+-- INSERIR MATERIA
+DELIMITER $
+DROP PROCEDURE IF EXISTS sp_inserir_materia;
+CREATE PROCEDURE sp_inserir_materia(
+	IN p_materia varchar(45),
+    IN p_cor_materia varchar(45)
+) BEGIN
+	INSERT INTO  tbl_materia(	
+		materia, 
+        cor_materia
+	)VALUES(
+		p_materia, 
+        p_cor_materia
+	);
+END$
+
+-- INSERIR TURMA
+DELIMITER $
+DROP PROCEDURE IF EXISTS sp_inserir_turma;
+CREATE PROCEDURE sp_inserir_turma(
+	IN p_turma varchar(45)
+)BEGIN
+	INSERT INTO  tbl_turma(
+		turma
+	)VALUES(
+		p_turma
+	);
+END$
+
+-- INSERIR ALUNO
+
+DELIMITER $ 
+DROP PROCEDURE IF EXISTS sp_inserir_aluno;
+CREATE PROCEDURE sp_inserir_aluno (  
+    IN p_credencial VARCHAR(11),  
+    IN p_id_turma INT,  
+    IN p_nome VARCHAR(80),  
+    IN p_matricula VARCHAR(45),  
+    IN p_telefone VARCHAR(20),  
+    IN p_email VARCHAR(45),  
+    IN p_data_nascimento DATE  
+) BEGIN  
+
+    DECLARE v_id_usuario INT;
+
+    -- Busca o id_usuario pela credencial
+    SELECT id_usuario INTO v_id_usuario
+    FROM tbl_usuarios
+    WHERE credencial = p_credencial;
+
+    -- Verifica se o usuário existe
+    IF v_id_usuario IS NULL THEN 
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Esse usuário não existe';  
+    END IF; 
+
+    -- Verifica se a turma existe 
+    IF NOT EXISTS (
+        SELECT 1 FROM tbl_turma WHERE id_turma = p_id_turma
+    ) THEN 
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Essa turma não existe'; 
+    END IF; 
+
+    -- SE O USUARIO JÁ ESTA CADASTRADO
+    IF EXISTS (
+        SELECT 1 FROM tbl_aluno WHERE id_usuario = v_id_usuario
+    ) THEN 
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Esse usuário já está cadastrado como aluno'; 
+    END IF;
+
+    -- Insere o novo aluno  
+    INSERT INTO tbl_aluno ( 
+        id_usuario, id_turma, nome, matricula, telefone, email, data_nascimento 
+    ) 
+    VALUES ( 
+        v_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento 
+    );
+END$
+
+------------------------------------------------------------
 
 -- CADASTRO DE TURMA
 insert into tbl_turma(turma)values("1º ANO B")
 
--- ----------------------------------------------------------
+------------------------------------------------------------
 
 -- CADASTRO DE USUÁRIO
 DELIMITER $
 DROP PROCEDURE IF EXISTS sp_cadastrar_usuario_completo;
 CREATE PROCEDURE sp_cadastrar_usuario_completo (
--- DADOS DE ACESSO (tbl_usuarios)
-IN p_credencial VARCHAR(11),
-IN p_senha VARCHAR(20),
-IN p_nivel_usuario ENUM('aluno', 'professor', 'gestão'),
--- DADOS GERAIS
-IN p_nome VARCHAR(80),
-IN p_email VARCHAR(60),
-IN p_telefone VARCHAR(20),
--- DADOS ESPECÍFICOS DE ALUNO/PROFESSOR (Passar NULL se for Gestão)
-IN p_data_nascimento DATE,
--- DADOS ESPECÍFICOS DE ALUNO (Passar NULL se for Professor/Gestão)
-IN p_matricula VARCHAR(45),
-IN p_id_turma INT
+    -- DADOS DE ACESSO (tbl_usuarios)
+    IN p_credencial VARCHAR(11),
+    IN p_senha VARCHAR(20),
+    IN p_nivel_usuario ENUM('aluno', 'professor', 'gestão'),
+    -- DADOS GERAIS
+    IN p_nome VARCHAR(80),
+    IN p_email VARCHAR(60),
+    IN p_telefone VARCHAR(20),
+    -- DADOS ESPECÍFICOS DE ALUNO/PROFESSOR (Passar NULL se for Gestão)
+    IN p_data_nascimento DATE,
+    -- DADOS ESPECÍFICOS DE ALUNO (Passar NULL se for Professor/Gestão)
+    IN p_matricula VARCHAR(45),
+    IN p_id_turma INT
 )
 BEGIN
-DECLARE v_id_usuario INT;
--- 1. Insere o registro de credencial/acesso
-INSERT INTO tbl_usuarios (credencial, senha, nivel_usuario) VALUES
-(p_credencial, p_senha, p_nivel_usuario);
--- 2. Captura o ID gerado (LAST_INSERT_ID())
+    DECLARE v_id_usuario INT;
+
+    INSERT INTO tbl_usuarios (credencial, senha, nivel_usuario) 
+    VALUES (p_credencial, p_senha, p_nivel_usuario);
 
 SET v_id_usuario = LAST_INSERT_ID();
--- 3. Lógica Condicional para a inserção do perfil
-IF p_nivel_usuario = 'aluno' THEN
-INSERT INTO tbl_aluno (
-nome, data_nascimento, matricula, telefone, email, id_usuario, id_turma
-) VALUES (
-p_nome, p_data_nascimento, p_matricula, p_telefone, p_email, v_id_usuario,
-p_id_turma
-);
-ELSEIF p_nivel_usuario = 'professor' THEN
-INSERT INTO tbl_professor (
-nome, data_nascimento, telefone, email, id_usuario
-) VALUES (
-p_nome, p_data_nascimento, p_telefone, p_email, v_id_usuario
-);
-ELSEIF p_nivel_usuario = 'gestão' THEN
-INSERT INTO tbl_gestao (
-nome, telefone, email, id_usuario
-) VALUES (
-p_nome, p_telefone, p_email, v_id_usuario
-);
-END IF;
--- 4. Retorna o ID gerado
-SELECT v_id_usuario AS id_usuario_cadastrado, p_nivel_usuario AS nivel_cadastrado;
+    IF p_nivel_usuario = 'aluno' THEN
+        INSERT INTO tbl_aluno (
+            nome, data_nascimento, matricula, telefone, email, id_usuario, id_turma
+        ) VALUES (
+            p_nome, p_data_nascimento, p_matricula, p_telefone, p_email, v_id_usuario,
+            p_id_turma
+        );
+    ELSEIF p_nivel_usuario = 'professor' THEN
+        INSERT INTO tbl_professor (
+            nome, data_nascimento, telefone, email, id_usuario
+        ) VALUES (
+            p_nome, p_data_nascimento, p_telefone, p_email, v_id_usuario
+        );
+    ELSEIF p_nivel_usuario = 'gestão' THEN
+        INSERT INTO tbl_gestao (
+            nome, telefone, email, id_usuario
+        ) VALUES (
+            p_nome, p_telefone, p_email, v_id_usuario
+        );
+    END IF;
+        SELECT v_id_usuario AS id_usuario_cadastrado, p_nivel_usuario AS nivel_cadastrado;
 END$
 
--- CADASTRO ALUNO
-CALL sp_cadastrar_usuario_completo('24122460', 'oioioi', 'aluno', 'João Victor Campos dos Santos', 'joaosantos20071009@gmail.com', '994509385',
-'2007-09-11', '24122460', 1);
+-- -- CADASTRO ALUNO
+-- CALL sp_cadastrar_usuario_completo('24122460', 'oioioi', 'aluno', 'João Victor Campos dos Santos', 'joaosantos20071009@gmail.com', '994509385',
+-- '2007-09-11', '24122460', 1);
 
--- CADASTRO PROFESSOR
-CALL sp_cadastrar_usuario_completo('54321...', 'senha', 'professor', 'Nome', 'email', 'tel',
-'1980-01-01', NULL, NULL);
+-- -- CADASTRO PROFESSOR
+-- CALL sp_cadastrar_usuario_completo('54321...', 'senha', 'professor', 'Nome', 'email', 'tel',
+-- '1980-01-01', NULL, NULL);
 
--- CADASTRO GESTÃO
-CALL sp_cadastrar_usuario_completo('98765...', 'senha', 'gestão', 'Nome', 'email', 'tel',
-NULL, NULL, NULL);
+-- -- CADASTRO GESTÃO
+-- CALL sp_cadastrar_usuario_completo('98765...', 'senha', 'gestão', 'Nome', 'email', 'tel',
+-- NULL, NULL, NULL);
 
 -- VERIFICAR USUÁRIO CRIADO
-select * from tbl_usuarios;
+-- select * from tbl_usuarios;
 
--- ----------------------------------------------------------
+------------------------------------------------------------
 
 -- LOGIN USUÁRIO
 DELIMITER $
 DROP PROCEDURE IF EXISTS sp_login_usuario;
 CREATE PROCEDURE sp_login_usuario (
-IN p_credencial VARCHAR(11),
-IN p_senha VARCHAR(20) -- Lembre-se: use HASHES de senha no ambiente real!
+    IN p_credencial VARCHAR(11),
+    IN p_senha VARCHAR(20) 
 )
 BEGIN
--- Variável para armazenar o nível e o ID do usuário autenticado
-DECLARE v_nivel VARCHAR(10);
-DECLARE v_id_usuario INT;
--- 1. Tenta encontrar e autenticar o usuário
--- Se as credenciais baterem, armazena o nível e o ID nas variáveis locais.
-SELECT nivel_usuario, id_usuario INTO v_nivel, v_id_usuario
-FROM tbl_usuarios
-WHERE credencial = p_credencial AND senha = p_senha;
--- 2. Se o usuário foi encontrado (v_id_usuario NÃO é NULL), executa o SELECT específico
-IF v_id_usuario IS NOT NULL THEN
--- A. PERFIL ALUNO
-IF v_nivel = 'aluno' THEN
-SELECT
-U.id_usuario,
-U.credencial,
-U.senha,
-U.nivel_usuario,
-A.id_aluno,
-A.nome,
-A.email,
-A.telefone,
+    DECLARE v_nivel VARCHAR(10);
+    DECLARE v_id_usuario INT;
+    SELECT nivel_usuario, id_usuario INTO v_nivel, v_id_usuario
+    FROM tbl_usuarios
+    WHERE credencial = p_credencial AND senha = p_senha;
+    IF v_id_usuario IS NOT NULL THEN
+    -- A. PERFIL ALUNO
+    IF v_nivel = 'aluno' THEN
+        SELECT
+        U.id_usuario,
+        U.credencial,
+        U.senha,
+        U.nivel_usuario,
+        A.id_aluno,
+        A.nome,
+        A.email,
+        A.telefone,
 
-A.data_nascimento,
-A.matricula,
-A.id_turma
-FROM
-tbl_usuarios U
-INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
-WHERE U.id_usuario = v_id_usuario;
--- B. PERFIL PROFESSOR
-ELSEIF v_nivel = 'professor' THEN
-SELECT
-U.id_usuario,
-U.credencial,
-U.senha,
-U.nivel_usuario,
-P.id_professor,
-P.nome,
-P.email,
-P.telefone,
-P.data_nascimento
-FROM
-tbl_usuarios U
-INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
-WHERE U.id_usuario = v_id_usuario;
--- C. PERFIL GESTÃO
-ELSEIF v_nivel = 'gestão' THEN
-SELECT
-U.id_usuario,
-U.credencial,
-U.senha,
-U.nivel_usuario,
-G.id_gestao,
-G.nome,
-G.email,
-G.telefone
-FROM
-tbl_usuarios U
-INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
-WHERE U.id_usuario = v_id_usuario;
-END IF;
--- 3. Se as credenciais não bateram
-ELSE
-
--- Retorna um resultado vazio (ou uma linha de erro que seu backend pode capturar)
-SELECT NULL AS autenticacao_falhou;
-END IF;
+        A.data_nascimento,
+        A.matricula,
+        A.id_turma
+        FROM
+        tbl_usuarios U
+        INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
+        WHERE U.id_usuario = v_id_usuario;
+        -- B. PERFIL PROFESSOR
+        ELSEIF v_nivel = 'professor' THEN
+        SELECT
+        U.id_usuario,
+        U.credencial,
+        U.senha,
+        U.nivel_usuario,
+        P.id_professor,
+        P.nome,
+        P.email,
+        P.telefone,
+        P.data_nascimento
+        FROM
+        tbl_usuarios U
+        INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
+        WHERE U.id_usuario = v_id_usuario;
+        -- C. PERFIL GESTÃO
+        ELSEIF v_nivel = 'gestão' THEN
+        SELECT
+        U.id_usuario,
+        U.credencial,
+        U.senha,
+        U.nivel_usuario,
+        G.id_gestao,
+        G.nome,
+        G.email,
+        G.telefone
+        FROM
+        tbl_usuarios U
+        INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
+        WHERE U.id_usuario = v_id_usuario;
+    END IF;
+    ELSE
+        SELECT NULL AS autenticacao_falhou;
+    END IF;
 END$
 
 -- TESTANDO LOGIN
-CALL sp_login_usuario(
-'24122460', -- p_credencial
-'oioioi' -- p_senha
-);
+-- CALL sp_login_usuario('24122460', 'senha');
 
+----------------------------------------------------------------
+
+-- VIEW USUARIO 
+DROP VIEW IF EXISTS vw_listar_usuarios;
+CREATE VIEW vw_listar_usuarios AS
+SELECT
+    id_usuario,
+	credencial,
+    senha,
+    nivel_usuario
+FROM tbl_usuarios;
+
+-- VIEW SEMESTRE
+DROP VIEW IF EXISTS vw_buscar_semestre;
+CREATE VIEW vw_buscar_semestre AS
+SELECT
+    id_semestre,
+    semestre
+FROM tbl_semestre;
+
+-- VIEW CATEGORIA
+DROP VIEW IF EXISTS vw_buscar_categoria;
+CREATE VIEW vw_buscar_categoria AS 
+SELECT
+    id_categoria,
+    categoria
+FROM tbl_categoria;
+
+-- VIEW MATERIA 
+DROP VIEW IF EXISTS vw_buscar_materia;
+CREATE VIEW  vw_buscar_materia AS
+SELECT
+    id_materia,
+    materia,
+    cor_materia
+FROM tbl_materia;
+
+-- VIEW TURMA
+DROP VIEW IF EXISTS vw_buscar_turma;
+CREATE VIEW vw_buscar_turma AS
+SELECT
+    id_turma,
+    turma
+FROM tbl_turma;
+
+-- VIEW ALUNO
+DROP VIEW IF EXISTS vw_buscar_aluno; 
+CREATE VIEW vw_buscar_aluno AS 
+SELECT 
+    a.id_aluno, 
+    u.id_usuario, u.credencial, t.id_turma, 
+    t.turma AS turma, 
+    a.nome AS nome, 
+    a.matricula, 
+    a.telefone, 
+    a.email, 
+    a.data_nascimento 
+FROM tbl_aluno a JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
+JOIN tbl_turma t ON a.id_turma = t.id_turma; 
+
+SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
+
+SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';

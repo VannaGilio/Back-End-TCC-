@@ -4,7 +4,7 @@ const prisma = new PrismaClient()
 const insertCategoria = async function(categoria){
     try {
         let result = await prisma.$executeRaw`
-            CALL inserir_categoria(${categoria.categoria})
+            CALL sp_inserir_categoria(${categoria.categoria})
         `
 
         if(result)
@@ -19,7 +19,7 @@ const insertCategoria = async function(categoria){
 const selectAllCategorias = async function(){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_categoria;
+            select * from vw_buscar_categoria;
         `
         return result
     } catch (error) {
@@ -30,7 +30,7 @@ const selectAllCategorias = async function(){
 const selectByIdCategoria = async function(id){
     try {
         let result = await prisma.$queryRaw`
-            select * from buscar_categoria WHERE id_categoria = ${id}
+            select * from vw_buscar_categoria WHERE id_categoria = ${id}
         `
         return result
     } catch (error) {

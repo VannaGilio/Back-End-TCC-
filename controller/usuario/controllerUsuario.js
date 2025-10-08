@@ -162,7 +162,7 @@ const loginUsuario = async function (usuario, contentType) {
 
                 let dados = {}
 
-                if(result){
+                if(Object.keys(result).length > 0){
                     dados.status = true
                     dados.status_code = 200
                     dados.items = result.length

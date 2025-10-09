@@ -331,6 +331,30 @@ app.get('/v1/analytica-ai/aluno/:id', async function (request, response){
     response.json(result)
 })
 
+app.delete('/v1/analytica-ai/aluno/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerAluno.excluirAlunoPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+
+/*********PROFESSOR*********/
+
+const controllerProfessor= require('./controller/professor/controllerProfessor.js')
+
+app.post('/v1/analytica-ai/professor', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    let result = await controllerProfessor.inserirProfessor(body, contentType)
+    
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

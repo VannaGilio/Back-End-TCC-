@@ -331,6 +331,15 @@ app.get('/v1/analytica-ai/aluno/:id', async function (request, response){
     response.json(result)
 })
 
+app.delete('/v1/analytica-ai/aluno/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerAluno.excluirAlunoPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

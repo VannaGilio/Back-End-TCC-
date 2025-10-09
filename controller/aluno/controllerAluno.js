@@ -101,8 +101,38 @@ const buscarAlunoPorId = async function(id){
   }
 }
 
+const excluirAlunoPorId = async function (id) {
+  try {
+      if(id == '' || id == null || id == undefined){
+          return message.ERROR_REQUIRED_FIELDS
+      }else{
+
+          let select = await alunoDAO.selectByIdAluno(parseInt(id))
+
+          if(select != false || typeof (select) == 'object'){
+              if(select.length > 0){
+                  let result = await alunoDAO.deleteByIdAluno(parseInt(id))
+
+                  if(result){
+                      return message.SUCCESS_DELETED_ITEM
+                  }else{
+                      return message.ERROR_INTERNAL_SERVER_MODEL
+                  }   
+              }else{
+                  return message.ERROR_NOT_FOUND
+              }
+          }else{
+              return message.ERROR_INTERNAL_SERVER_MODEL
+          }
+      } 
+  } catch (error) {
+      return message.ERROR_INTERNAL_SERVER_CONTROLLER
+  }
+}
+
 module.exports = {
-    inserirAluno,
-    listarAlunos,
-    buscarAlunoPorId
+  inserirAluno,
+  listarAlunos,
+  buscarAlunoPorId,
+  excluirAlunoPorId
 }

@@ -60,3 +60,34 @@ JOIN tbl_turma t ON a.id_turma = t.id_turma;
 
 -- EXIBIR VIEWS
 SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
+
+-- VIEW DE BUSCA DE DADOS DO USUÁRIO PELA CREDENCIAL
+CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
+SELECT
+    u.id_usuario,
+    u.credencial,
+    u.senha,
+    u.nivel_usuario,
+    u.token_recuperacao,
+    u.expiracao_token,
+    COALESCE(a.email, p.email, g.email) AS email
+FROM
+    tbl_usuarios u
+LEFT JOIN
+    tbl_aluno a ON u.id_usuario = a.id_usuario
+LEFT JOIN
+    tbl_professor p ON u.id_usuario = p.id_usuario
+LEFT JOIN
+    tbl_gestao g ON u.id_usuario = g.id_usuario
+WHERE
+    COALESCE(a.email, p.email, g.email) IS NOT NULL;
+
+select * from vw_buscar_usuario_by_credencial where credencial = "24122460";
+
+insert into tbl_usuarios(credencial, senha, nivel_usuario, token_recuperacao, expiracao_token)values(
+	"credencial",
+    "senha",
+    "aluno",
+    "token_teste",
+    "2025-10-09T16:13:47"
+);

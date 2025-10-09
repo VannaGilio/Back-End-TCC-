@@ -650,3 +650,29 @@ JOIN tbl_turma t ON a.id_turma = t.id_turma;
 SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
 
 SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
+
+-- VIEW DE BUSCA DE DADOS DO USUÁRIO PELA CREDENCIAL
+-- View para buscar dados de usuários pelo campo Credencial.
+-- Ela retorna o id_usuario, o email (necessário para o NodeMailer)
+-- e os campos de token para atualização.
+CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
+SELECT
+    u.id_usuario,
+    u.credencial,
+    u.senha,
+    u.nivel_usuario,
+    u.token_recuperacao,
+    u.expiracao_token,
+    -- Usa COALESCE para pegar o email da tabela correta (aluno, professor ou gestão)
+    COALESCE(a.email, p.email, g.email) AS email
+FROM
+    tbl_usuarios u
+LEFT JOIN
+    tbl_aluno a ON u.id_usuario = a.id_usuario
+LEFT JOIN
+    tbl_professor p ON u.id_usuario = p.id_usuario
+LEFT JOIN
+    tbl_gestao g ON u.id_usuario = g.id_usuario
+WHERE
+    -- Garante que só retorna usuários que tenham um e-mail associado
+    COALESCE(a.email, p.email, g.email) IS NOT NULL;

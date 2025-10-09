@@ -3,6 +3,9 @@ const message = require('../../modulo/config.js')
 const usuarioDAO = require('../../model/DAO/usuarioDAO/usuarioDAO.js')
 const { application } = require('express')
 
+//Import das controllerss
+const controllerTurma = require('../turma/controllerTurma.js')
+
 const inserirUsuario = async function (usuario, contentType) {
     try {
         if( String(contentType).toLowerCase() == 'application/json'){
@@ -159,6 +162,16 @@ const loginUsuario = async function (usuario, contentType) {
                 return message.ERROR_REQUIRED_FIELDS // 400
             }else{
                 let result = await usuarioDAO.loginUsuario(usuario)
+
+                const dadosTurma = await controllerTurma.buscarTurmaPorId(result.id_turma)
+
+                const turma = {
+                    id_turma: dadosTurma.turmas[0].id_turma,
+                    turma: dadosTurma.turmas[0].turma
+                }
+
+                result.turma = turma
+                delete result.id_turma
 
                 let dados = {}
 

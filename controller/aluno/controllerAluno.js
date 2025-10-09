@@ -25,7 +25,18 @@ const inserirAluno = async function (aluno, contentType) {
         return message.ERROR_CONTENT_TYPE //415
     }
   } catch (error) {
-    return message.ERROR_INTERNAL_SERVER_CONTROLLER // 500
+    switch (true) {
+      case error.message.includes('Esse usuário não existe'):
+        return message.ERROR_NOT_FOUND
+      case error.message.includes('Somente usuários com nível "aluno" podem ser inseridos nesta tabela'):
+        return message.ERROR_ACCESS
+      case error.message.includes('Essa turma não existe'):
+        return message.ERROR_NOT_FOUND
+      case error.message.includes('Esse usuário já está cadastrado como aluno'):
+        return message.ERROR_CONFLICT
+      default:
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 500
+      }
   }
 }
 

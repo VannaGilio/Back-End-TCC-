@@ -338,18 +338,18 @@ CREATE PROCEDURE sp_inserir_professor (
     IN 
 )
 
+use db_analytica_ai;
 -- INSERIR ALUNO
 
 DELIMITER $ 
 DROP PROCEDURE IF EXISTS sp_inserir_aluno;
-CREATE PROCEDURE sp_inserir_aluno (  
-    IN p_credencial VARCHAR(11),  
-    IN p_id_turma INT,  
+CREATE PROCEDURE sp_inserir_aluno (   
     IN p_nome VARCHAR(80),  
+    IN p_data_nascimento DATE,
     IN p_matricula VARCHAR(45),  
     IN p_telefone VARCHAR(20),  
     IN p_email VARCHAR(45),  
-    IN p_data_nascimento DATE
+    IN p_id_turma INT
 ) 
 BEGIN  
     DECLARE v_id_usuario INT;
@@ -359,11 +359,11 @@ BEGIN
     SELECT id_usuario, nivel_usuario 
     INTO v_id_usuario, v_nivel_usuario
     FROM tbl_usuarios
-    WHERE credencial = p_credencial;
+    WHERE credencial = p_matricula;
 
     -- Verifica se o usuário existe
     IF v_id_usuario IS NULL THEN 
-        SIGNAL SQLSTATE '45000' 
+        SIGNAL SQLSTATE '45000' 	
         SET MESSAGE_TEXT = 'Esse usuário não existe';  
     END IF; 
 
@@ -391,10 +391,10 @@ BEGIN
 
     -- Insere o novo aluno  
     INSERT INTO tbl_aluno ( 
-        id_usuario, id_turma, nome, matricula, telefone, email, data_nascimento
+        nome, data_nascimento, matricula, telefone, email, id_usuario, id_turma
     ) 
     VALUES ( 
-        v_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento
+        p_nome, p_data_nascimento, p_matricula, p_telefone, p_email, v_id_usuario, p_id_turma
     );
 END$
 

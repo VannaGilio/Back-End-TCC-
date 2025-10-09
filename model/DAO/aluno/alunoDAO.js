@@ -19,7 +19,7 @@ const insertAluno = async function(aluno){
         else
             return false
     } catch (error) {
-        return false
+        throw error
     }
 }
 

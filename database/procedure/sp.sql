@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 -- INSERIR USUARIO
 DELIMITER $
 DROP procedure IF EXISTS sp_inserir_usuario;
@@ -76,36 +74,66 @@ CREATE PROCEDURE sp_inserir_turma(
 END$
 
 -- INSERIR ALUNO
+use db_analytica_ai;
+-- INSERIR ALUNO
 
 DELIMITER $ 
 DROP PROCEDURE IF EXISTS sp_inserir_aluno;
-CREATE PROCEDURE sp_inserir_aluno (  
-    IN p_credencial INT,  
-    IN p_id_turma INT,  
+CREATE PROCEDURE sp_inserir_aluno (   
     IN p_nome VARCHAR(80),  
+    IN p_data_nascimento DATE,
     IN p_matricula VARCHAR(45),  
     IN p_telefone VARCHAR(20),  
     IN p_email VARCHAR(45),  
-    IN p_data_nascimento DATE  
-) BEGIN  
-IF NOT EXISTS ( 
-    SELECT 1 FROM tbl_usuarios 
-    WHERE id_usuario = p_id_usuario)  
-    THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Esse usuário não existe';  
-END IF; 
--- Verifica se a turma existe 
-IF NOT EXISTS (
-    SELECT 1 FROM tbl_turma WHERE id_turma = p_id_turma) 
-    THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Essa turma não existe'; 
-END IF; 
--- Insere o novo aluno  
-INSERT INTO tbl_aluno ( 
-    id_usuario, id_turma, nome, matricula, telefone, email, data_nascimento 
+    IN p_id_turma INT
 ) 
-VALUES ( 
-    p_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento 
-);
-END$ 
+BEGIN  
+    DECLARE v_id_usuario INT;
+    DECLARE v_nivel_usuario ENUM('aluno', 'professor', 'gestão');
+
+    -- Busca o id_usuario e o nível de acesso
+    SELECT id_usuario, nivel_usuario 
+    INTO v_id_usuario, v_nivel_usuario
+    FROM tbl_usuarios
+    WHERE credencial = p_matricula;
+
+    -- Verifica se o usuário existe
+    IF v_id_usuario IS NULL THEN 
+        SIGNAL SQLSTATE '45000' 	
+        SET MESSAGE_TEXT = 'Esse usuário não existe';  
+    END IF; 
+
+    -- Verifica se o nível do usuário é "aluno"
+    IF v_nivel_usuario <> 'aluno' THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Somente usuários com nível "aluno" podem ser inseridos nesta tabela';
+    END IF;
+
+    -- Verifica se a turma existe 
+    IF NOT EXISTS (
+        SELECT 1 FROM tbl_turma WHERE id_turma = p_id_turma
+    ) THEN 
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Essa turma não existe'; 
+    END IF; 
+
+    -- Verifica se o usuário já está cadastrado como aluno
+    IF EXISTS (
+        SELECT 1 FROM tbl_aluno WHERE id_usuario = v_id_usuario
+    ) THEN 
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Esse usuário já está cadastrado como aluno'; 
+    END IF;
+
+    -- Insere o novo aluno  
+    INSERT INTO tbl_aluno ( 
+        nome, data_nascimento, matricula, telefone, email, id_usuario, id_turma
+    ) 
+    VALUES ( 
+        p_nome, p_data_nascimento, p_matricula, p_telefone, p_email, v_id_usuario, p_id_turma
+    );
+END$
+
 
 ------------------------------------------------------------
 

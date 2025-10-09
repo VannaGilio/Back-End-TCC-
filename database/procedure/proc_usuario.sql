@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 -- INSERIR USUARIO
 DELIMITER $
@@ -252,3 +253,5 @@ select * from tbl_usuarios;
 CALL sp_login_usuario('24122460', 'senha');
 
 SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
+=======
+>>>>>>> 8e096774a276269f5ac4cba75fea04baf9bf185b

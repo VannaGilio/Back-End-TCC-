@@ -334,6 +334,10 @@ CREATE PROCEDURE sp_inserir_turma(
 	);
 END$
 
+CREATE PROCEDURE sp_inserir_professor (
+    IN 
+)
+
 -- INSERIR ALUNO
 
 DELIMITER $ 
@@ -383,6 +387,50 @@ CREATE PROCEDURE sp_inserir_aluno (
         v_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento 
     );
 END$
+
+-- INSERIR PROFESSOR
+
+DELIMITER $
+DROP PROCEDURE sp_inserir_professor;
+CREATE PROCEDURE sp_inserir_professor (
+	IN p_credencial VARCHAR(11),
+    IN p_nome VARCHAR(80),
+    IN p_data_nascimento DATE,
+    IN p_telefone VARCHAR(20),
+    IN p_email VARCHAR(60)
+)
+BEGIN
+    DECLARE v_id_usuario INT;
+
+    SELECT id_usuario INTO v_id_usuario
+    FROM tbl_usuarios
+    WHERE credencial = p_credencial;
+
+	IF v_id_usuario IS NULL THEN 
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Esse usuário não existe';  
+    END IF;
+
+	IF EXISTS (
+        SELECT 1 FROM tbl_professor WHERE id_usuario = v_id_usuario
+    ) THEN 
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Esse usuário já está cadastrado como professor'; 
+    END IF;
+
+    INSERT INTO tbl_professor (
+		id_usuario,
+        nome,
+        data_nascimento,
+        telefone,
+        email
+    ) VALUES (
+		v_id_usuario,
+        p_nome,
+        p_data_nascimento,
+        p_telefone,
+        p_email
+    );
+END $
 
 ------------------------------------------------------------
 

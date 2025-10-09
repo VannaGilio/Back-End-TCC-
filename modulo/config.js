@@ -13,6 +13,8 @@ const EMAIL_CONFLICT = {status: false, status_code: 409, message: "Este e-mail j
 
 const SUCCESS_CREATED_ITEM = {status: true, status_code: 201, message: "Item criado com sucesso!!!"}
 const SUCCESS_ALUNO_CREATED = {status: true, status_code: 201, message: "Aluno cadastrado com sucesso!!!"}
+const SUCCESS_PROFESSOR_CREATED = {status: true, status_code: 201, message: "Professor cadastrado com sucesso!!!"}
+const SUCCESS_GESTÃO_CREATED = {status: true, status_code: 201, message: "Gestão cadastrada com sucesso!!!"}
 const SUCCESS_DELETED_ITEM = {status: true, status_code: 200, message: "Item excluído com sucesso!!!"}
 const SUCCESS_UPDATED_ITEM = {status: true, status_code: 200, message: "Item atualizado com sucesso!!"}
 
@@ -30,5 +32,7 @@ module.exports = {
     ERROR_CREDENTIAL_INCOMPATIBLE,
     CREDENTIAL_CONFLICT,
     EMAIL_CONFLICT,
+    SUCCESS_GESTÃO_CREATED,
+    SUCCESS_PROFESSOR_CREATED,
     SUCCESS_ALUNO_CREATED
 }

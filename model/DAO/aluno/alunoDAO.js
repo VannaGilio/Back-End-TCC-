@@ -19,7 +19,6 @@ const insertAluno = async function(aluno){
         else
             return false
     } catch (error) {
-        console.error(error)
         return false
     }
 }
@@ -60,7 +59,6 @@ const deleteByIdAluno = async function (id) {
         return false
     }
 }
-
 
 module.exports = {
     insertAluno,

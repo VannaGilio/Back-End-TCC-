@@ -79,7 +79,7 @@ END$
 DELIMITER $ 
 DROP PROCEDURE IF EXISTS sp_inserir_aluno;
 CREATE PROCEDURE sp_inserir_aluno (  
-    IN p_id_usuario INT,  
+    IN p_credencial INT,  
     IN p_id_turma INT,  
     IN p_nome VARCHAR(80),  
     IN p_matricula VARCHAR(45),  

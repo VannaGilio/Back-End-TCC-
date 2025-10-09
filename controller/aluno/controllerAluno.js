@@ -39,6 +39,70 @@ const inserirAluno = async function (aluno, contentType) {
   }
 }
 
+const listarAlunos = async function(){
+  try {
+    let result = await alunoDAO.selectAllAlunos()
+    if (!result || !Array.isArray(result) || result.length === 0) {
+      return message.ERROR_NOT_FOUND
+    }
+  
+    let alunos = result.map(item => ({
+      ...item,
+      turma: {
+        id_turma: item.id_turma,
+        nome_turma: item.turma
+      }
+    }))
+  
+    alunos.forEach(a => delete a.id_turma)
+  
+    let dados = {
+      status: true,
+      status_code: 200,
+      items: alunos.length,
+      alunos
+    }
+  
+    return dados
+  
+  } catch (error) {
+    return message.ERROR_INTERNAL_SERVER_CONTROLLER
+  }
+}
+
+const buscarAlunoPorId = async function(id){
+  try {
+    let result = await alunoDAO.selectByIdAluno(id)
+
+    if (!result || result.length === 0) {
+      return message.ERROR_NOT_FOUND
+    }
+
+    let aluno = {
+      ...result[0],  
+      turma: {
+        id_turma: result[0].id_turma,
+        turma: result[0].turma
+      }
+    }
+
+    delete aluno.id_turma
+
+    let dados = {
+      status: true,
+      status_code: 200,
+      aluno
+    }
+    
+    return dados
+
+  } catch (error) {
+    return message.ERROR_INTERNAL_SERVER_CONTROLLER
+  }
+}
+
 module.exports = {
-    inserirAluno
+    inserirAluno,
+    listarAlunos,
+    buscarAlunoPorId
 }

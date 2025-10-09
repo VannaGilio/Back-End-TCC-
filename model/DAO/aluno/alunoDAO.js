@@ -23,6 +23,32 @@ const insertAluno = async function(aluno){
         return false
     }
 }
+
+const selectAllAlunos = async function(){
+    try {
+        let result = await prisma.$queryRaw`
+            select * from vw_buscar_aluno;
+        `
+        return result
+    } catch (error) {
+        return false
+    }
+}
+
+const selectByIdAluno = async function(id){
+    try {
+        let result = await prisma.$queryRaw`
+            select * from vw_buscar_aluno WHERE id_aluno = ${id}
+        `
+
+        return result
+    } catch (error) {
+        return false
+    }
+}
+
 module.exports = {
-    insertAluno
+    insertAluno,
+    selectAllAlunos,
+    selectByIdAluno
 }

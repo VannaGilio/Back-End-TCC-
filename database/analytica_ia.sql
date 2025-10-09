@@ -349,29 +349,39 @@ CREATE PROCEDURE sp_inserir_aluno (
     IN p_matricula VARCHAR(45),  
     IN p_telefone VARCHAR(20),  
     IN p_email VARCHAR(45),  
-    IN p_data_nascimento DATE  
-) BEGIN  
-
+    IN p_data_nascimento DATE
+) 
+BEGIN  
     DECLARE v_id_usuario INT;
+    DECLARE v_nivel_usuario ENUM('aluno', 'professor', 'gestão');
 
-    -- Busca o id_usuario pela credencial
-    SELECT id_usuario INTO v_id_usuario
+    -- Busca o id_usuario e o nível de acesso
+    SELECT id_usuario, nivel_usuario 
+    INTO v_id_usuario, v_nivel_usuario
     FROM tbl_usuarios
     WHERE credencial = p_credencial;
 
     -- Verifica se o usuário existe
     IF v_id_usuario IS NULL THEN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Esse usuário não existe';  
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Esse usuário não existe';  
     END IF; 
+
+    -- Verifica se o nível do usuário é "aluno"
+    IF v_nivel_usuario <> 'aluno' THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Somente usuários com nível "aluno" podem ser inseridos nesta tabela';
+    END IF;
 
     -- Verifica se a turma existe 
     IF NOT EXISTS (
         SELECT 1 FROM tbl_turma WHERE id_turma = p_id_turma
     ) THEN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Essa turma não existe'; 
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Essa turma não existe'; 
     END IF; 
 
-    -- SE O USUARIO JÁ ESTA CADASTRADO
+    -- Verifica se o usuário já está cadastrado como aluno
     IF EXISTS (
         SELECT 1 FROM tbl_aluno WHERE id_usuario = v_id_usuario
     ) THEN 
@@ -381,10 +391,10 @@ CREATE PROCEDURE sp_inserir_aluno (
 
     -- Insere o novo aluno  
     INSERT INTO tbl_aluno ( 
-        id_usuario, id_turma, nome, matricula, telefone, email, data_nascimento 
+        id_usuario, id_turma, nome, matricula, telefone, email, data_nascimento
     ) 
     VALUES ( 
-        v_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento 
+        v_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento
     );
 END$
 

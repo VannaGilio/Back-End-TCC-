@@ -7,7 +7,7 @@ const inserirUsuario = async function (usuario, contentType) {
     try {
         if( String(contentType).toLowerCase() == 'application/json'){
             if( usuario.credencial == '' || usuario.credencial == undefined || usuario.credencial == null || usuario.credencial.length > 11 ||
-                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 && usuario.senha.length < 8 ||
+                usuario.senha == '' || usuario.senha == undefined || usuario.senha == null || usuario.senha.length > 20 || usuario.senha.length < 8 ||
                 // usuario.nivel_usuario == '' || usuario.nivel_usuario == undefined || usuario.nivel_usuario == null || 
                 usuario.nivel_usuario != 'aluno' && usuario.nivel_usuario != 'professor' && usuario.nivel_usuario != 'gestão'
             ){

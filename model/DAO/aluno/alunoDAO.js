@@ -1,17 +1,17 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
+const message = require('../../../modulo/config.js')
 
 const insertAluno = async function(aluno){
     try {
         let result = await prisma.$executeRaw`
             CALL sp_inserir_aluno(
-            ${aluno.credencial}, 
-            ${aluno.id_turma},
             ${aluno.nome}, 
+            ${aluno.data_nascimento},
             ${aluno.matricula}, 
-            ${aluno.email}, 
             ${aluno.telefone}, 
-            ${aluno.data_nascimento}
+            ${aluno.email},
+            ${aluno.id_turma}
            );
         `
         if(result)

@@ -5,6 +5,7 @@ const ERROR_INTERNAL_SERVER_CONTROLLER = {status: false, status_code: 500, messa
 const ERROR_CONTENT_TYPE = {status: false, status_code: 415, message: "Não foi possivel processar a requisição, pois, o tipo de dado encaminhado não é processado pelo servidor. Favor encaminhar dados apenas no formato JSON"}
 const ERROR_NOT_FOUND = {status: false, status_code: 404, message: "Recurso solicitado não encontrado."}
 const ERROR_CONFLICT = {status: false, status_code: 409, message: "Usuário já existe"}
+const ERROR_ACCESS = {status: false, status_code: 409, message: "A credencial fornecida não pertence a um usuário de nível 'aluno'."}
 
 const ERROR_CREDENTIAL_INCOMPATIBLE = {status: false, status_code: 400, message: "A credencial deve ser igual à matrícula"}
 
@@ -34,5 +35,6 @@ module.exports = {
     EMAIL_CONFLICT,
     SUCCESS_GESTÃO_CREATED,
     SUCCESS_PROFESSOR_CREATED,
-    SUCCESS_ALUNO_CREATED
+    SUCCESS_ALUNO_CREATED,
+    ERROR_ACCESS
 }

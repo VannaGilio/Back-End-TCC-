@@ -334,9 +334,13 @@ CREATE PROCEDURE sp_inserir_turma(
 	);
 END$
 
+CALL sp_inserir_turma("1º ano B");
+select * from tbl_turma;
+
 CREATE PROCEDURE sp_inserir_professor (
     IN 
 )
+
 
 use db_analytica_ai;
 -- INSERIR ALUNO
@@ -512,6 +516,10 @@ END$
 -- VERIFICAR USUÁRIO CRIADO
 -- select * from tbl_usuarios;
 
+-- select * from tbl_aluno;
+-- select * from tbl_professor;
+-- select * from tbl_gestao;
+
 ------------------------------------------------------------
 
 -- LOGIN USUÁRIO
@@ -650,3 +658,37 @@ JOIN tbl_turma t ON a.id_turma = t.id_turma;
 SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
 
 SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
+
+-- ALTERAÇÃO TABELA DE USUÁRIOS
+ALTER TABLE tbl_usuarios
+ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
+ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
+
+-- ATUALIZANDO DADOS DE USUÁRIOS DEPOIS DAS MUDANÇAS
+UPDATE tbl_usuarios SET
+expiracao_token = NOW() + INTERVAL 1 HOUR,
+token_recuperacao = 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
+WHERE id_usuario = 1;
+
+-- VIEW - BUSCA DE USUÁRIO PELA CREDENCIAL
+CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
+SELECT
+u.id_usuario,
+u.credencial,
+u.senha,
+u.nivel_usuario,
+u.token_recuperacao,
+u.expiracao_token,
+COALESCE(a.email, p.email, g.email) AS email
+FROM
+tbl_usuarios u
+LEFT JOIN
+tbl_aluno a ON u.id_usuario = a.id_usuario
+LEFT JOIN
+tbl_professor p ON u.id_usuario = p.id_usuario
+LEFT JOIN
+tbl_gestao g ON u.id_usuario = g.id_usuario
+WHERE
+COALESCE(a.email, p.email, g.email) IS NOT NULL;
+
+select * from vw_buscar_usuario_by_credencial where credencial = "24122460";

@@ -93,6 +93,26 @@ app.post('/v1/analytica-ai/usuarios/login', async function (request, response){
     response.json(result)
 })
 
+app.post('/v1/analytica-ai/usuarios/recuperar-senha', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    const result = await controllerUsuario.solicitarRecuperacaoSenha(body, contentType);
+
+    response.status(result.status_code)
+    response.json(result)
+});
+
+app.post('/v1/analytica-ai/usuarios/resetar-senha', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    const result = await controllerUsuario.redefinirSenha(body, contentType);
+
+    response.status(result.status_code)
+    response.json(result)
+});
+
 /*********SEMESTRE*********/
 
 const controllerSemestre = require('./controller/semestre/controllerSemestre.js')

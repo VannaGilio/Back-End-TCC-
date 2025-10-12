@@ -168,17 +168,18 @@ const loginUsuario = async function (usuario, contentType) {
 
                 const dadosTurma = await controllerTurma.buscarTurmaPorId(result.id_turma)
 
-                const turma = {
-                    id_turma: dadosTurma.turmas[0].id_turma,
-                    turma: dadosTurma.turmas[0].turma
-                }
-
-                result.turma = turma
-                delete result.id_turma
-
-                let dados = {}
-
                 if(Object.keys(result).length > 0){
+                    const turma = {
+                        id_turma: dadosTurma.turmas[0].id_turma,
+                        turma: dadosTurma.turmas[0].turma
+                    }
+
+                    result.turma = turma
+                    delete result.id_turma
+
+                    let dados = {}
+
+
                     dados.status = true
                     dados.status_code = 200
                     dados.items = result.length

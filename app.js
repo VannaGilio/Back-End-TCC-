@@ -113,6 +113,15 @@ app.post('/v1/analytica-ai/usuarios/resetar-senha', async function (request, res
     response.json(result)
 });
 
+app.get('/v1/analytica-ai/usuarios/verificar-token/:token', async function (request, response){
+    let token = request.params.token
+
+    let result = await controllerUsuario.verificarExistenciaToken(token)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 /*********SEMESTRE*********/
 
 const controllerSemestre = require('./controller/semestre/controllerSemestre.js')

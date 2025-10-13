@@ -190,6 +190,22 @@ const resetPassword = async (token, newPassword) => {
     }
 };
 
+const verificarExistenciaToken = async function(token){
+    try {
+        let result = await prisma.$queryRaw`
+            select * from tbl_usuarios where token_recuperacao = ${token};
+        ` 
+        
+        if(result.length > 0){
+            return true
+        }else {
+            return false
+        }
+    } catch (error) {
+        return false
+    }
+}
+
 
 
 module.exports = {
@@ -202,5 +218,6 @@ module.exports = {
 
     selectUserByCredencial,
     generatePasswordToken,
-    resetPassword
+    resetPassword,
+    verificarExistenciaToken
 }

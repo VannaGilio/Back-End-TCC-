@@ -297,6 +297,28 @@ const redefinirSenha = async function (dadosRedefinicao, contentType) {
     }
 };
 
+const verificarExistenciaToken = async function (token){
+    try {
+        if(token == '' || token == null || token == undefined || token.length <= 0){
+            return message.ERROR_REQUIRED_FIELDS //400
+        }else{
+            let result = await usuarioDAO.verificarExistenciaToken(token)
+            let dados = {}
+
+            if(result === true){
+                dados.status = true
+                dados.status_code = 200
+
+                return dados
+            }else{
+                return message.ERROR_NOT_FOUND
+            }
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER //500
+    }
+}
+
 module.exports = {
     inserirUsuario, 
     listarUsuarios,
@@ -306,5 +328,6 @@ module.exports = {
     loginUsuario,
 
     solicitarRecuperacaoSenha,
-    redefinirSenha
+    redefinirSenha,
+    verificarExistenciaToken
 }

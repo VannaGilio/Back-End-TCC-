@@ -1,4 +1,4 @@
-const ERROR_REQUIRED_FIELDS = {status: false, status_code: 400, message: "Não foi possivel realizar a requisisção, pois existem campos obrigatorios que não foram preenchidos ou não atendem a quantidade de caracteristicas"}
+const ERROR_REQUIRED_FIELDS = {status: false, status_code: 400, message: "Campos obrigatorios não foram preenchidos ou não atendem os requerimentos"}
 const ERROR_INTERNAL_SERVER = {status: false, status_code: 500, message: "Devido a erros internos no servidor, não foi possivel processar a requisição!!!"}
 const ERROR_INTERNAL_SERVER_MODEL = {status: false, status_code: 500, message: "Devido a erros internos no servidor da MODEL, não foi possivel processar a requisição!!!"}
 const ERROR_INTERNAL_SERVER_CONTROLLER = {status: false, status_code: 500, message: "Devido a erros internos no servidor da CONTROLLER, não foi possivel processar a requisição!!!"}

@@ -150,13 +150,19 @@ JOIN tbl_aluno ON tbl_recurso_aluno.id_aluno = tbl_aluno.id_aluno;
 
 
 CREATE VIEW buscarAtividade AS
-    id_atividade,
-    titulo,
-    descricao,
+    tbl_atividades.id_atividade,
+    tbl_atividades.titulo,
+    tbl_atividades.descricao,
     data_criacao,
-	id_materia,
-    id_professor,
-    id_categoria
+	tbl_atividades.id_materia,
+    tbl_professor.id_professor,
+    tbl_professor.nome,
+    tbl_professor.data_nascimento,
+    tbl_professor.telefone,
+    tbl_professor.email,
+    tbl_professor.id_usuario,
+    tbl_categoria.id_categoria,
+    tbl_categoria.categoria,
 FROM tbl_atividade;
 
 

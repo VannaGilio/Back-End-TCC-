@@ -138,6 +138,75 @@ const loginUsuario = async function(usuario){
     }
 }
 
+// Busca o usuário pela credencial
+const selectUserByCredencial = async function (credencial) {
+    try {
+        const result = await prisma.$queryRaw`
+            SELECT * FROM vw_buscar_usuario_by_credencial WHERE credencial = ${credencial}
+        `;
+
+        if(result)
+            return result
+        else
+            return false
+    } catch (error) {
+        console.error("Erro no DAO (selectUserByEmail):", error);
+        return false;
+    }
+};
+
+// Salva o token e a expiração via Stored Procedure
+const generatePasswordToken = async (idUsuario, token, expirationDate) => {
+    try {
+        // Usa a Stored Procedure para persistir o token
+        const result = await prisma.$queryRaw`
+            CALL sp_gerar_token_recuperacao(${idUsuario}, ${token}, ${expirationDate})
+        `;
+        return result.length > 0;
+    } catch (error) {
+        console.error("Erro no DAO (generatePasswordToken):", error);
+        return false;
+    }
+};
+
+// Redefine a senha via Stored Procedure
+const resetPassword = async (token, newPassword) => {
+    try {
+        // Usa a Stored Procedure para validar o token, resetar a senha e limpar o token.
+        const result = await prisma.$queryRaw`
+            CALL sp_resetar_senha(${token}, ${newPassword})
+        `;
+        
+        if (result.length > 0 && result[0].f0 === 'SUCESSO') {
+            return true;
+        }else if (result.length > 0 && result[0].f0 === 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO') {
+            return result[0].f0
+        }else {
+            return false
+        }
+    } catch (error) {
+        console.error("Erro no DAO (resetPassword):", error);
+        return false;
+    }
+};
+
+const verificarExistenciaToken = async function(token){
+    try {
+        let result = await prisma.$queryRaw`
+            select * from tbl_usuarios where token_recuperacao = ${token};
+        ` 
+        
+        if(result.length > 0){
+            return true
+        }else {
+            return false
+        }
+    } catch (error) {
+        return false
+    }
+}
+
+
 
 module.exports = {
     insertUsuario,
@@ -145,5 +214,10 @@ module.exports = {
     selectByIdUsuario,
     deleteByIdUsuario,
     updateByIdUsuario,
-    loginUsuario
+    loginUsuario,
+
+    selectUserByCredencial,
+    generatePasswordToken,
+    resetPassword,
+    verificarExistenciaToken
 }

@@ -334,44 +334,58 @@ CREATE PROCEDURE sp_inserir_turma(
 	);
 END$
 
+CALL sp_inserir_turma("1º ano B");
+select * from tbl_turma;
+
 CREATE PROCEDURE sp_inserir_professor (
     IN 
 )
 
+
+use db_analytica_ai;
 -- INSERIR ALUNO
 
 DELIMITER $ 
 DROP PROCEDURE IF EXISTS sp_inserir_aluno;
-CREATE PROCEDURE sp_inserir_aluno (  
-    IN p_credencial VARCHAR(11),  
-    IN p_id_turma INT,  
+CREATE PROCEDURE sp_inserir_aluno (   
     IN p_nome VARCHAR(80),  
+    IN p_data_nascimento DATE,
     IN p_matricula VARCHAR(45),  
     IN p_telefone VARCHAR(20),  
     IN p_email VARCHAR(45),  
-    IN p_data_nascimento DATE  
-) BEGIN  
-
+    IN p_id_turma INT
+) 
+BEGIN  
     DECLARE v_id_usuario INT;
+    DECLARE v_nivel_usuario ENUM('aluno', 'professor', 'gestão');
 
-    -- Busca o id_usuario pela credencial
-    SELECT id_usuario INTO v_id_usuario
+    -- Busca o id_usuario e o nível de acesso
+    SELECT id_usuario, nivel_usuario 
+    INTO v_id_usuario, v_nivel_usuario
     FROM tbl_usuarios
-    WHERE credencial = p_credencial;
+    WHERE credencial = p_matricula;
 
     -- Verifica se o usuário existe
     IF v_id_usuario IS NULL THEN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Esse usuário não existe';  
+        SIGNAL SQLSTATE '45000' 	
+        SET MESSAGE_TEXT = 'Esse usuário não existe';  
     END IF; 
+
+    -- Verifica se o nível do usuário é "aluno"
+    IF v_nivel_usuario <> 'aluno' THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Somente usuários com nível "aluno" podem ser inseridos nesta tabela';
+    END IF;
 
     -- Verifica se a turma existe 
     IF NOT EXISTS (
         SELECT 1 FROM tbl_turma WHERE id_turma = p_id_turma
     ) THEN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Essa turma não existe'; 
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Essa turma não existe'; 
     END IF; 
 
-    -- SE O USUARIO JÁ ESTA CADASTRADO
+    -- Verifica se o usuário já está cadastrado como aluno
     IF EXISTS (
         SELECT 1 FROM tbl_aluno WHERE id_usuario = v_id_usuario
     ) THEN 
@@ -381,10 +395,10 @@ CREATE PROCEDURE sp_inserir_aluno (
 
     -- Insere o novo aluno  
     INSERT INTO tbl_aluno ( 
-        id_usuario, id_turma, nome, matricula, telefone, email, data_nascimento 
+        nome, data_nascimento, matricula, telefone, email, id_usuario, id_turma
     ) 
     VALUES ( 
-        v_id_usuario, p_id_turma, p_nome, p_matricula, p_telefone, p_email, p_data_nascimento 
+        p_nome, p_data_nascimento, p_matricula, p_telefone, p_email, v_id_usuario, p_id_turma
     );
 END$
 
@@ -501,6 +515,10 @@ END$
 
 -- VERIFICAR USUÁRIO CRIADO
 -- select * from tbl_usuarios;
+
+-- select * from tbl_aluno;
+-- select * from tbl_professor;
+-- select * from tbl_gestao;
 
 ------------------------------------------------------------
 
@@ -640,3 +658,95 @@ JOIN tbl_turma t ON a.id_turma = t.id_turma;
 SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
 
 SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
+
+-- ALTERAÇÃO TABELA DE USUÁRIOS
+ALTER TABLE tbl_usuarios
+ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
+ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
+
+-- ATUALIZANDO DADOS DE USUÁRIOS DEPOIS DAS MUDANÇAS
+UPDATE tbl_usuarios SET
+expiracao_token = NOW() + INTERVAL 1 HOUR,
+token_recuperacao = 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
+WHERE id_usuario = 1;
+
+-- VIEW - BUSCA DE USUÁRIO PELA CREDENCIAL
+CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
+SELECT
+u.id_usuario,
+u.credencial,
+u.senha,
+u.nivel_usuario,
+u.token_recuperacao,
+u.expiracao_token,
+COALESCE(a.email, p.email, g.email) AS email
+FROM
+tbl_usuarios u
+LEFT JOIN
+tbl_aluno a ON u.id_usuario = a.id_usuario
+LEFT JOIN
+tbl_professor p ON u.id_usuario = p.id_usuario
+LEFT JOIN
+tbl_gestao g ON u.id_usuario = g.id_usuario
+WHERE
+COALESCE(a.email, p.email, g.email) IS NOT NULL;
+
+select * from vw_buscar_usuario_by_credencial where credencial = "24122460";
+
+-- PROCEDURE - SALVANDO TOKEN DE RECUPERAÇÃO
+DELIMITER $$
+CREATE PROCEDURE sp_gerar_token_recuperacao(
+IN p_id_usuario INT,
+IN p_token VARCHAR(255),
+IN p_expiracao DATETIME
+)
+BEGIN
+UPDATE tbl_usuarios
+SET
+token_recuperacao = p_token,
+expiracao_token = p_expiracao
+WHERE
+id_usuario = p_id_usuario;
+
+SELECT p_id_usuario AS id_usuario_afetado;
+END$$
+DELIMITER ;
+
+call sp_gerar_token_recuperacao (1, "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", NOW() + INTERVAL 1 HOUR)
+
+-- PROCEDURE - VALIDAR TOKEN E RESETAR SENHA
+DELIMITER $$
+CREATE PROCEDURE sp_resetar_senha(
+IN p_token VARCHAR(255),
+IN p_nova_senha VARCHAR(20)
+)
+BEGIN
+DECLARE v_id_usuario INT;
+
+SELECT id_usuario INTO v_id_usuario
+FROM tbl_usuarios
+WHERE token_recuperacao = p_token
+AND expiracao_token > NOW() 
+LIMIT 1;
+
+IF v_id_usuario IS NOT NULL THEN
+
+UPDATE tbl_usuarios
+SET senha = p_nova_senha
+WHERE id_usuario = v_id_usuario;
+
+UPDATE tbl_usuarios
+SET token_recuperacao = NULL,
+expiracao_token = NULL
+WHERE id_usuario = v_id_usuario;
+
+SELECT 'SUCESSO' AS status_reset;
+ELSE
+
+SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
+END IF;
+END$$
+DELIMITER ;
+
+call sp_resetar_senha ("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", "novaSenhaGerada");
+

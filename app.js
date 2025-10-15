@@ -8,6 +8,7 @@
    npx prisma init
    npm install @prisma/client
    npx prisma migrate dev 
+   npm install nodemailer
 
    sinc schema.prisma:
 
@@ -383,6 +384,22 @@ app.post('/v1/analytica-ai/professor', async function (request, response){
     response.status(result.status_code)
     response.json(result)
 })
+
+/*********DESEMPENHO*********/
+
+const controllerDesempenhoAluno = require('./controller/aluno/dashboard/controllerDesempenhoAluno.js')
+
+app.get('/v1/analytica-ai/desempenho/:idAluno', async function (request, response) {
+    let idAluno = parseInt(request.params.idAluno)
+    let idMateria = request.query.materia ? parseInt(request.query.materia): null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre): null
+
+    let result = await controllerDesempenhoAluno.buscarDesempenhoAluno(idAluno, idMateria, idSemestre)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 
 app.listen('8080', function(){
     console.log('API funcionando...')

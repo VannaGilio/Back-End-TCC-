@@ -446,6 +446,64 @@ BEGIN
     );
 END $
 
+-- PROCEDURE - SALVANDO TOKEN DE RECUPERAÇÃO
+DELIMITER $$
+CREATE PROCEDURE sp_gerar_token_recuperacao(
+IN p_id_usuario INT,
+IN p_token VARCHAR(255),
+IN p_expiracao DATETIME
+)
+BEGIN
+UPDATE tbl_usuarios
+SET
+token_recuperacao = p_token,
+expiracao_token = p_expiracao
+WHERE
+id_usuario = p_id_usuario;
+
+SELECT p_id_usuario AS id_usuario_afetado;
+END$$
+DELIMITER ;
+
+call sp_gerar_token_recuperacao (1, "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", NOW() + INTERVAL 1 HOUR)
+
+-- PROCEDURE - VALIDAR TOKEN E RESETAR SENHA
+DELIMITER $$
+CREATE PROCEDURE sp_resetar_senha(
+IN p_token VARCHAR(255),
+IN p_nova_senha VARCHAR(20)
+)
+BEGIN
+DECLARE v_id_usuario INT;
+
+SELECT id_usuario INTO v_id_usuario
+FROM tbl_usuarios
+WHERE token_recuperacao = p_token
+AND expiracao_token > NOW() 
+LIMIT 1;
+
+IF v_id_usuario IS NOT NULL THEN
+
+UPDATE tbl_usuarios
+SET senha = p_nova_senha
+WHERE id_usuario = v_id_usuario;
+
+UPDATE tbl_usuarios
+SET token_recuperacao = NULL,
+expiracao_token = NULL
+WHERE id_usuario = v_id_usuario;
+
+SELECT 'SUCESSO' AS status_reset;
+ELSE
+
+SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
+END IF;
+END$$
+DELIMITER ;
+
+call sp_resetar_senha ("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", "novaSenhaGerada");
+
+
 ------------------------------------------------------------
 
 -- CADASTRO DE TURMA
@@ -640,6 +698,69 @@ SELECT
     turma
 FROM tbl_turma;
 
+-- VIEW DESEMPENHO DO ALUNO
+DROP VIEW IF EXISTS vw_desempenho_aluno;
+CREATE VIEW vw_desempenho_aluno AS
+SELECT 
+  aa.id_aluno,
+  m.id_materia,
+  m.materia,
+  a.id_atividade,
+  a.titulo AS atividade,
+  c.categoria AS categoria,
+  n.nota,
+  n.id_semestre
+FROM tbl_nota n
+INNER JOIN tbl_atividade_aluno aa 
+  ON n.id_atividade_aluno = aa.id_atividade_aluno
+INNER JOIN tbl_atividade a 
+  ON aa.id_atividade = a.id_atividade
+INNER JOIN tbl_materia m 
+  ON a.id_materia = m.id_materia
+INNER JOIN tbl_categoria c 
+  ON a.id_categoria = c.id_categoria;
+
+SELECT * 
+FROM vw_desempenho_aluno 
+WHERE id_aluno = 9 AND id_materia = 2 AND id_semestre = 2;
+
+SELECT * FROM vw_desempenho_aluno;
+
+INSERT INTO tbl_professor (
+	nome, 
+    data_nascimento,
+    telefone,
+    email,
+    id_usuario
+) VALUES (
+	'Professor Genérico',
+    '2000-09-09',
+    '(11) 0 0000-0000',
+    'generico@escola.com',
+    17
+);
+
+INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
+VALUES
+('Prova 1', 'Primeira prova do semestre', '2025-10-01', 2, 1, 4),
+('Trabalho 1', 'Trabalho em grupo', '2025-10-05', 2, 1, 2),
+('Atividade Extra', 'Atividade complementar', '2025-10-10', 2, 1, 3);
+
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno)
+VALUES
+(1, 9),
+(2, 9),
+(3, 9);
+SELECT * FROM tbl_atividade;
+SELECT * FROM tbl_atividade_aluno;
+
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre)
+VALUES
+(7.5, 4, 2), 
+(8.0, 5, 2),
+(9.0, 6, 2); 
+SELECT * FROM tbl_nota;
+
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 
 CREATE VIEW vw_buscar_aluno AS 
@@ -692,61 +813,3 @@ WHERE
 COALESCE(a.email, p.email, g.email) IS NOT NULL;
 
 select * from vw_buscar_usuario_by_credencial where credencial = "24122460";
-
--- PROCEDURE - SALVANDO TOKEN DE RECUPERAÇÃO
-DELIMITER $$
-CREATE PROCEDURE sp_gerar_token_recuperacao(
-IN p_id_usuario INT,
-IN p_token VARCHAR(255),
-IN p_expiracao DATETIME
-)
-BEGIN
-UPDATE tbl_usuarios
-SET
-token_recuperacao = p_token,
-expiracao_token = p_expiracao
-WHERE
-id_usuario = p_id_usuario;
-
-SELECT p_id_usuario AS id_usuario_afetado;
-END$$
-DELIMITER ;
-
-call sp_gerar_token_recuperacao (1, "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", NOW() + INTERVAL 1 HOUR)
-
--- PROCEDURE - VALIDAR TOKEN E RESETAR SENHA
-DELIMITER $$
-CREATE PROCEDURE sp_resetar_senha(
-IN p_token VARCHAR(255),
-IN p_nova_senha VARCHAR(20)
-)
-BEGIN
-DECLARE v_id_usuario INT;
-
-SELECT id_usuario INTO v_id_usuario
-FROM tbl_usuarios
-WHERE token_recuperacao = p_token
-AND expiracao_token > NOW() 
-LIMIT 1;
-
-IF v_id_usuario IS NOT NULL THEN
-
-UPDATE tbl_usuarios
-SET senha = p_nova_senha
-WHERE id_usuario = v_id_usuario;
-
-UPDATE tbl_usuarios
-SET token_recuperacao = NULL,
-expiracao_token = NULL
-WHERE id_usuario = v_id_usuario;
-
-SELECT 'SUCESSO' AS status_reset;
-ELSE
-
-SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
-END IF;
-END$$
-DELIMITER ;
-
-call sp_resetar_senha ("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", "novaSenhaGerada");
-

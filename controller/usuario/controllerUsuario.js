@@ -7,7 +7,7 @@ const { application } = require('express')
 const controllerTurma = require('../turma/controllerTurma.js')
 
 const crypto = require('crypto');
-const nodeMailer = require('../../utils/nodeMailer.js');
+const nodeMailer = require('../../utils/nodeMailer.js')
 
 const inserirUsuario = async function (usuario, contentType) {
     try {

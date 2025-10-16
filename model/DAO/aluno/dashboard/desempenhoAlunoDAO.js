@@ -13,15 +13,13 @@ const selectDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
             sql += ` AND id_semestre = ${idSemestre}`
         }
 
-        console.log('query:', sql)
         let result = await prisma.$queryRawUnsafe(sql)
-        console.log('result banco:', result)
+        
         if(result)
             return result
         else
             return false        
     } catch (error) {
-        console.error(error)
         return false
     }
 }

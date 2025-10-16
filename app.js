@@ -8,6 +8,7 @@
    npx prisma init
    npm install @prisma/client
    npx prisma migrate dev 
+   npm install nodemailer
 
    sinc schema.prisma:
 
@@ -89,6 +90,35 @@ app.post('/v1/analytica-ai/usuarios/login', async function (request, response){
 
     let result = await controllerUsuario.loginUsuario(body, contentType)
     
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.post('/v1/analytica-ai/usuarios/recuperar-senha', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    const result = await controllerUsuario.solicitarRecuperacaoSenha(body, contentType);
+
+    response.status(result.status_code)
+    response.json(result)
+});
+
+app.post('/v1/analytica-ai/usuarios/resetar-senha', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    const result = await controllerUsuario.redefinirSenha(body, contentType);
+
+    response.status(result.status_code)
+    response.json(result)
+});
+
+app.get('/v1/analytica-ai/usuarios/verificar-token/:token', async function (request, response){
+    let token = request.params.token
+
+    let result = await controllerUsuario.verificarExistenciaToken(token)
+
     response.status(result.status_code)
     response.json(result)
 })
@@ -354,6 +384,22 @@ app.post('/v1/analytica-ai/professor', async function (request, response){
     response.status(result.status_code)
     response.json(result)
 })
+
+/*********DESEMPENHO*********/
+
+const controllerDesempenhoAluno = require('./controller/aluno/dashboard/controllerDesempenhoAluno.js')
+
+app.get('/v1/analytica-ai/desempenho/:idAluno', async function (request, response) {
+    let idAluno = parseInt(request.params.idAluno)
+    let idMateria = request.query.materia ? parseInt(request.query.materia): null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre): null
+
+    let result = await controllerDesempenhoAluno.buscarDesempenhoAluno(idAluno, idMateria, idSemestre)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 
 app.listen('8080', function(){
     console.log('API funcionando...')

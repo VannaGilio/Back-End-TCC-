@@ -334,9 +334,13 @@ CREATE PROCEDURE sp_inserir_turma(
 	);
 END$
 
+CALL sp_inserir_turma("1º ano B");
+select * from tbl_turma;
+
 CREATE PROCEDURE sp_inserir_professor (
     IN 
 )
+
 
 use db_analytica_ai;
 -- INSERIR ALUNO
@@ -442,6 +446,64 @@ BEGIN
     );
 END $
 
+-- PROCEDURE - SALVANDO TOKEN DE RECUPERAÇÃO
+DELIMITER $$
+CREATE PROCEDURE sp_gerar_token_recuperacao(
+IN p_id_usuario INT,
+IN p_token VARCHAR(255),
+IN p_expiracao DATETIME
+)
+BEGIN
+UPDATE tbl_usuarios
+SET
+token_recuperacao = p_token,
+expiracao_token = p_expiracao
+WHERE
+id_usuario = p_id_usuario;
+
+SELECT p_id_usuario AS id_usuario_afetado;
+END$$
+DELIMITER ;
+
+call sp_gerar_token_recuperacao (1, "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", NOW() + INTERVAL 1 HOUR)
+
+-- PROCEDURE - VALIDAR TOKEN E RESETAR SENHA
+DELIMITER $$
+CREATE PROCEDURE sp_resetar_senha(
+IN p_token VARCHAR(255),
+IN p_nova_senha VARCHAR(20)
+)
+BEGIN
+DECLARE v_id_usuario INT;
+
+SELECT id_usuario INTO v_id_usuario
+FROM tbl_usuarios
+WHERE token_recuperacao = p_token
+AND expiracao_token > NOW() 
+LIMIT 1;
+
+IF v_id_usuario IS NOT NULL THEN
+
+UPDATE tbl_usuarios
+SET senha = p_nova_senha
+WHERE id_usuario = v_id_usuario;
+
+UPDATE tbl_usuarios
+SET token_recuperacao = NULL,
+expiracao_token = NULL
+WHERE id_usuario = v_id_usuario;
+
+SELECT 'SUCESSO' AS status_reset;
+ELSE
+
+SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
+END IF;
+END$$
+DELIMITER ;
+
+call sp_resetar_senha ("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", "novaSenhaGerada");
+
+
 ------------------------------------------------------------
 
 -- CADASTRO DE TURMA
@@ -511,6 +573,10 @@ END$
 
 -- VERIFICAR USUÁRIO CRIADO
 -- select * from tbl_usuarios;
+
+-- select * from tbl_aluno;
+-- select * from tbl_professor;
+-- select * from tbl_gestao;
 
 ------------------------------------------------------------
 
@@ -632,6 +698,117 @@ SELECT
     turma
 FROM tbl_turma;
 
+-- VIEW MEDIA MATERIA
+DROP VIEW IF EXISTS vw_media_aluno_materia;
+CREATE VIEW vw_media_aluno_materia AS
+SELECT 
+    aa.id_aluno,
+    m.id_materia,
+    AVG(n.nota) AS media
+FROM tbl_nota n
+INNER JOIN tbl_atividade_aluno aa 
+    ON n.id_atividade_aluno = aa.id_atividade_aluno
+INNER JOIN tbl_atividade a 
+    ON aa.id_atividade = a.id_atividade
+INNER JOIN tbl_materia m 
+    ON a.id_materia = m.id_materia
+GROUP BY aa.id_aluno, m.id_materia;
+
+-- VIEW DESEMPENHO DO ALUNO
+DROP VIEW IF EXISTS vw_desempenho_aluno;
+CREATE VIEW vw_desempenho_aluno AS
+SELECT 
+    aa.id_aluno,
+	al.nome AS nome,
+    m.id_materia,
+    m.materia,
+    a.id_atividade,
+    a.titulo AS atividade,
+    c.categoria,
+    n.nota,
+    n.id_semestre,
+    vm.media AS media_materia,
+    f.total_presenca,
+    f.total_aulas,
+    f.porcentagem_frequencia
+FROM tbl_nota n
+INNER JOIN tbl_atividade_aluno aa 
+    ON n.id_atividade_aluno = aa.id_atividade_aluno
+INNER JOIN tbl_aluno al ON aa.id_aluno = al.id_aluno  
+INNER JOIN tbl_atividade a 
+    ON aa.id_atividade = a.id_atividade
+INNER JOIN tbl_materia m 
+    ON a.id_materia = m.id_materia
+INNER JOIN tbl_categoria c 
+    ON a.id_categoria = c.id_categoria
+LEFT JOIN vw_media_aluno_materia vm 
+    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia
+LEFT JOIN vw_frequencia_por_aluno_materia f
+    ON f.id_aluno = aa.id_aluno AND f.id_materia = m.id_materia;
+
+
+SELECT * 
+FROM vw_desempenho_aluno 
+WHERE id_aluno = 9 AND id_materia = 2 AND id_semestre = 2;
+
+SELECT * FROM vw_desempenho_aluno;
+
+INSERT INTO tbl_professor (
+	nome, 
+    data_nascimento,
+    telefone,
+    email,
+    id_usuario
+) VALUES (
+	'Professor Genérico',
+    '2000-09-09',
+    '(11) 0 0000-0000',
+    'generico@escola.com',
+    2
+);
+select * from tbl_professor;
+
+INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
+VALUES
+('Prova 1', 'Primeira prova do semestre', '2025-10-01', 2, 1, 1),
+('Trabalho 1', 'Trabalho em grupo', '2025-10-05', 1, 1, 2),
+('Seminario', 'Seminario', '2025-10-10', 3, 2, 3),
+('Atividade Extra', 'Atividade complementar', '2025-10-10', 2, 1, 2);
+
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno)
+VALUES
+(1, 9),
+(2, 9),
+(3, 9);
+SELECT * FROM tbl_atividade;
+SELECT * FROM tbl_atividade_aluno;
+
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre)
+VALUES
+(7.5, 4, 2), 
+(8.0, 5, 2),
+(9.0, 6, 2); 
+SELECT * FROM tbl_nota;
+
+-- VIEW FREQUENCIA
+
+CREATE VIEW vw_frequencia_por_aluno_materia AS
+SELECT
+    id_aluno,
+    id_materia,
+    COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
+    COUNT(*) AS total_aulas,
+    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
+FROM
+    tbl_frequencia
+GROUP BY
+    id_aluno,
+    id_materia;
+
+-- INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia)
+-- VALUES (false, '2025-10-22', 3, 1);
+
+
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 
 CREATE VIEW vw_buscar_aluno AS 
@@ -651,28 +828,36 @@ SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
 
 SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
 
--- VIEW DE BUSCA DE DADOS DO USUÁRIO PELA CREDENCIAL
--- View para buscar dados de usuários pelo campo Credencial.
--- Ela retorna o id_usuario, o email (necessário para o NodeMailer)
--- e os campos de token para atualização.
+-- ALTERAÇÃO TABELA DE USUÁRIOS
+ALTER TABLE tbl_usuarios
+ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
+ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
+
+-- ATUALIZANDO DADOS DE USUÁRIOS DEPOIS DAS MUDANÇAS
+UPDATE tbl_usuarios SET
+expiracao_token = NOW() + INTERVAL 1 HOUR,
+token_recuperacao = 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
+WHERE id_usuario = 1;
+
+-- VIEW - BUSCA DE USUÁRIO PELA CREDENCIAL
 CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
 SELECT
-    u.id_usuario,
-    u.credencial,
-    u.senha,
-    u.nivel_usuario,
-    u.token_recuperacao,
-    u.expiracao_token,
-    -- Usa COALESCE para pegar o email da tabela correta (aluno, professor ou gestão)
-    COALESCE(a.email, p.email, g.email) AS email
+u.id_usuario,
+u.credencial,
+u.senha,
+u.nivel_usuario,
+u.token_recuperacao,
+u.expiracao_token,
+COALESCE(a.email, p.email, g.email) AS email
 FROM
-    tbl_usuarios u
+tbl_usuarios u
 LEFT JOIN
-    tbl_aluno a ON u.id_usuario = a.id_usuario
+tbl_aluno a ON u.id_usuario = a.id_usuario
 LEFT JOIN
-    tbl_professor p ON u.id_usuario = p.id_usuario
+tbl_professor p ON u.id_usuario = p.id_usuario
 LEFT JOIN
-    tbl_gestao g ON u.id_usuario = g.id_usuario
+tbl_gestao g ON u.id_usuario = g.id_usuario
 WHERE
-    -- Garante que só retorna usuários que tenham um e-mail associado
-    COALESCE(a.email, p.email, g.email) IS NOT NULL;
+COALESCE(a.email, p.email, g.email) IS NOT NULL;
+
+select * from vw_buscar_usuario_by_credencial where credencial = "24122460";

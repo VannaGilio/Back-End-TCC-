@@ -6,6 +6,9 @@ const { application } = require('express')
 //Import das controllerss
 const controllerTurma = require('../turma/controllerTurma.js')
 
+const crypto = require('crypto');
+const nodeMailer = require('../../utils/nodeMailer.js')
+
 const inserirUsuario = async function (usuario, contentType) {
     try {
         if( String(contentType).toLowerCase() == 'application/json'){
@@ -165,17 +168,18 @@ const loginUsuario = async function (usuario, contentType) {
 
                 const dadosTurma = await controllerTurma.buscarTurmaPorId(result.id_turma)
 
-                const turma = {
-                    id_turma: dadosTurma.turmas[0].id_turma,
-                    turma: dadosTurma.turmas[0].turma
-                }
-
-                result.turma = turma
-                delete result.id_turma
-
-                let dados = {}
-
                 if(Object.keys(result).length > 0){
+                    const turma = {
+                        id_turma: dadosTurma.turmas[0].id_turma,
+                        turma: dadosTurma.turmas[0].turma
+                    }
+
+                    result.turma = turma
+                    delete result.id_turma
+
+                    let dados = {}
+
+
                     dados.status = true
                     dados.status_code = 200
                     dados.items = result.length
@@ -194,11 +198,136 @@ const loginUsuario = async function (usuario, contentType) {
     }
 }
 
+const solicitarRecuperacaoSenha = async function (dadosCredencial, contentType) {
+    try {
+        if (String(contentType).toLowerCase() !== 'application/json') {
+            return message.ERROR_CONTENT_TYPE; 
+        }
+        const credencial = dadosCredencial.credencial
+
+        if (!credencial || credencial === '' || credencial.length > 15) {
+            return { status: false, status_code: 400, message: 'A credencial é obrigatória e deve ter um formato válido.' };
+        }
+
+        const user = await usuarioDAO.selectUserByCredencial(credencial);
+
+        if (user.length <= 0) {
+            let dados = {};
+            dados.status = false;
+            dados.status_code = 404;
+            dados.message = 'Credencial inválida. Verifique-a e tente novamente.';
+            return dados;
+        }
+
+        const idUsuario = user[0].id_usuario;
+
+        const token = crypto.randomBytes(32).toString('hex');
+
+        const expirationDate = new Date();
+        expirationDate.setHours(expirationDate.getHours() + 1);
+        const mysqlDateTime = expirationDate.toISOString().slice(0, 19).replace('T', ' ');
+
+        const tokenSaved = await usuarioDAO.generatePasswordToken(idUsuario, token, mysqlDateTime);
+
+        if (!tokenSaved) {
+            return { status: false, status_code: 500, message: 'Erro ao tentar gerar o e-mail, tente novamente mais tarde.' };
+        }
+
+
+        const emailSent = await nodeMailer.sendPasswordResetEmail(user[0].email, token);
+
+        let dados = {};
+        if (emailSent) {
+            dados.status = true;
+            dados.status_code = 200;
+            dados.message = 'Link de redefinição enviado para o seu e-mail.';
+            return dados;
+        } else {
+            await usuarioDAO.generatePasswordToken(idUsuario, null, null);
+            return { status: false, status_code: 500, message: 'Erro ao enviar o e-mail de redefinição.' };
+        }
+
+    } catch (error) {
+        console.error('Erro na controller solicitarRecuperacaoSenha:', error);
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER;
+    }
+};
+
+const redefinirSenha = async function (dadosRedefinicao, contentType) {
+    try {
+        if (String(contentType).toLowerCase() !== 'application/json') {
+            return message.ERROR_CONTENT_TYPE;
+        }
+
+        const token = dadosRedefinicao.token
+        const novaSenha = dadosRedefinicao.nova_senha
+
+        if (!token || token === '' || !novaSenha || novaSenha === '') {
+            return { status: false, status_code: 400, message: 'Token e nova senha são obrigatórios.' };
+        }
+
+        if (novaSenha.length < 4 || novaSenha.length > 20) {
+            return { status: false, status_code: 400, message: 'A senha deve ter entre 4 e 20 caracteres.' };
+        }
+
+        const resetStatus = await usuarioDAO.resetPassword(token, novaSenha);
+
+        if (resetStatus === true) {
+            let dados = {};
+
+            dados.status = true;
+            dados.status_code = 200;
+            dados.message = 'Senha redefinida com sucesso! Você já pode fazer login.';
+            return dados; 
+            
+        } else if (resetStatus === 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO') {
+            return { 
+                status: false, 
+                status_code: 401, 
+                message: 'Token inválido ou expirado. Por favor, solicite uma nova recuperação.' 
+            };
+            
+        } else {
+            return { status: false, status_code: 500, message: `Falha na redefinição de senha: ${resetStatus}` };
+        }
+
+    } catch (error) {
+        console.error('Erro na controller redefinirSenha:', error);
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER; 
+    }
+};
+
+const verificarExistenciaToken = async function (token){
+    try {
+        if(token == '' || token == null || token == undefined || token.length <= 0){
+            return message.ERROR_REQUIRED_FIELDS //400
+        }else{
+            let result = await usuarioDAO.verificarExistenciaToken(token)
+            let dados = {}
+
+            if(result === true){
+                dados.status = true
+                dados.status_code = 200
+
+                return dados
+            }else{
+                return message.ERROR_NOT_FOUND
+            }
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER //500
+    }
+}
+
 module.exports = {
     inserirUsuario, 
     listarUsuarios,
     buscarUsuarioPorId,
     excluirUsuarioPorId,
     atualizarUsuarioPorId,
-    loginUsuario
+    loginUsuario,
+
+    solicitarRecuperacaoSenha,
+    redefinirSenha,
+    verificarExistenciaToken
 }

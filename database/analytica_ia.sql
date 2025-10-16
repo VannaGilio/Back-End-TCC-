@@ -727,7 +727,10 @@ SELECT
     c.categoria,
     n.nota,
     n.id_semestre,
-    vm.media AS media_materia
+    vm.media AS media_materia,
+    f.total_presenca,
+    f.total_aulas,
+    f.porcentagem_frequencia
 FROM tbl_nota n
 INNER JOIN tbl_atividade_aluno aa 
     ON n.id_atividade_aluno = aa.id_atividade_aluno
@@ -739,7 +742,9 @@ INNER JOIN tbl_materia m
 INNER JOIN tbl_categoria c 
     ON a.id_categoria = c.id_categoria
 LEFT JOIN vw_media_aluno_materia vm 
-    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia;
+    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia
+LEFT JOIN vw_frequencia_por_aluno_materia f
+    ON f.id_aluno = aa.id_aluno AND f.id_materia = m.id_materia;
 
 
 SELECT * 
@@ -759,14 +764,16 @@ INSERT INTO tbl_professor (
     '2000-09-09',
     '(11) 0 0000-0000',
     'generico@escola.com',
-    17
+    2
 );
+select * from tbl_professor;
 
 INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
 VALUES
-('Prova 1', 'Primeira prova do semestre', '2025-10-01', 2, 1, 4),
-('Trabalho 1', 'Trabalho em grupo', '2025-10-05', 2, 1, 2),
-('Atividade Extra', 'Atividade complementar', '2025-10-10', 2, 1, 3);
+('Prova 1', 'Primeira prova do semestre', '2025-10-01', 2, 1, 1),
+('Trabalho 1', 'Trabalho em grupo', '2025-10-05', 1, 1, 2),
+('Seminario', 'Seminario', '2025-10-10', 3, 2, 3),
+('Atividade Extra', 'Atividade complementar', '2025-10-10', 2, 1, 2);
 
 INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno)
 VALUES
@@ -782,6 +789,25 @@ VALUES
 (8.0, 5, 2),
 (9.0, 6, 2); 
 SELECT * FROM tbl_nota;
+
+-- VIEW FREQUENCIA
+
+CREATE VIEW vw_frequencia_por_aluno_materia AS
+SELECT
+    id_aluno,
+    id_materia,
+    COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
+    COUNT(*) AS total_aulas,
+    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
+FROM
+    tbl_frequencia
+GROUP BY
+    id_aluno,
+    id_materia;
+
+-- INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia)
+-- VALUES (false, '2025-10-22', 3, 1);
+
 
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 

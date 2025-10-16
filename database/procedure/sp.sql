@@ -283,3 +283,74 @@ CALL sp_login_usuario('24122460', 'senha');
 SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
 =======
 >>>>>>> 8e096774a276269f5ac4cba75fea04baf9bf185b
+
+-- --------------------------------------------------------------------------------------------
+
+
+-- COLOCAR TOKEN NA TABELA DE USUÁRIOS
+-- Procedure para gerar e salvar o token de recuperação
+-- A busca pelo usuário é feita na View pelo backend (credencial -> id_usuario).
+-- Esta procedure recebe o ID e realiza a atualização direta.
+DELIMITER $$
+CREATE PROCEDURE sp_gerar_token_recuperacao(
+    IN p_id_usuario INT, 
+    IN p_token VARCHAR(255),
+    IN p_expiracao DATETIME
+)
+BEGIN
+    -- Atualiza os campos de recuperação na tabela principal
+    UPDATE tbl_usuarios
+    SET
+        token_recuperacao = p_token,
+        expiracao_token = p_expiracao
+    WHERE
+        id_usuario = p_id_usuario;
+    
+    -- Retorna o id_usuario para confirmar a operação no backend (opcional, mas útil)
+    SELECT p_id_usuario AS id_usuario_afetado;
+END$$
+DELIMITER ;
+
+SET @TESTE_TOKEN = 'a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8';
+-- Exemplo de data de expiração (Data atual + 1 hora)
+SET @TESTE_EXPIRACAO = DATE_ADD(NOW(), INTERVAL 1 HOUR); 
+-- Chama a procedure para o usuário com id_usuario = 8
+CALL sp_gerar_token_recuperacao(8, @TESTE_TOKEN, @TESTE_EXPIRACAO);
+
+-- -------------------------------------------------------------------------------------------
+
+-- PROCEDURE RESETAR SENHA
+DELIMITER $$
+CREATE PROCEDURE sp_resetar_senha(
+IN p_token VARCHAR(255),
+IN p_nova_senha VARCHAR(20) -- Senha sem hash (conforme especificado)
+)
+BEGIN
+DECLARE v_id_usuario INT;
+-- 1. Tenta encontrar o usuário pelo token que NÃO expirou
+SELECT id_usuario INTO v_id_usuario
+FROM tbl_usuarios
+WHERE token_recuperacao = p_token
+AND expiracao_token > NOW() -- O token deve ser válido (não expirado)
+LIMIT 1;
+IF v_id_usuario IS NOT NULL THEN
+-- 2. Atualiza a senha
+UPDATE tbl_usuarios
+SET senha = p_nova_senha
+WHERE id_usuario = v_id_usuario;
+-- 3. Invalida o token imediatamente (segurança)
+UPDATE tbl_usuarios
+SET token_recuperacao = NULL,
+expiracao_token = NULL
+WHERE id_usuario = v_id_usuario;
+-- Sucesso
+SELECT 'SUCESSO' AS status_reset;
+ELSE
+-- Falha: token não encontrado ou expirado
+SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
+END IF;
+END$$
+DELIMITER ;
+
+-- Chama a procedure de reset com o token e a nova senha
+CALL sp_resetar_senha("meu_token", "nova_senha");

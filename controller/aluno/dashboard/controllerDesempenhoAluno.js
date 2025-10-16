@@ -22,8 +22,14 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
                             id_aluno: item.id_aluno,
                             nome: item.nome
                         },
-                        // materia_id: item.id_materia,
-                        // materia: item.materia,
+                        frequencia: {
+                            frequencia: item.porcentagem_frequencia,
+                            presencas: item.total_presenca,
+                            // faltas: item.total_aulas - total_presenca,
+                            total_aulas: item.total_aulas
+                        },
+                        materia_id: item.id_materia,
+                        materia: item.materia,
                         atividades: [],
                         media: item.media_materia
                     })
@@ -38,7 +44,6 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
 
             const desempenhoArray = Array.from(desempenhoMap.values())
 
-
             if(result && result.length > 0){
                 dados.status = true
                 dados.status_code = 200
@@ -47,7 +52,7 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
 
                 return dados
 
-                
+        
             }else{
                 return message.ERROR_NOT_FOUND
             }

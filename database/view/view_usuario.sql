@@ -222,4 +222,3 @@ FROM tbl_relatorio;
 =======
 -- EXIBIR VIEWS
 SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
-

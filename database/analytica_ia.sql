@@ -698,27 +698,49 @@ SELECT
     turma
 FROM tbl_turma;
 
+-- VIEW MEDIA MATERIA
+DROP VIEW IF EXISTS vw_media_aluno_materia;
+CREATE VIEW vw_media_aluno_materia AS
+SELECT 
+    aa.id_aluno,
+    m.id_materia,
+    AVG(n.nota) AS media
+FROM tbl_nota n
+INNER JOIN tbl_atividade_aluno aa 
+    ON n.id_atividade_aluno = aa.id_atividade_aluno
+INNER JOIN tbl_atividade a 
+    ON aa.id_atividade = a.id_atividade
+INNER JOIN tbl_materia m 
+    ON a.id_materia = m.id_materia
+GROUP BY aa.id_aluno, m.id_materia;
+
 -- VIEW DESEMPENHO DO ALUNO
 DROP VIEW IF EXISTS vw_desempenho_aluno;
 CREATE VIEW vw_desempenho_aluno AS
 SELECT 
-  aa.id_aluno,
-  m.id_materia,
-  m.materia,
-  a.id_atividade,
-  a.titulo AS atividade,
-  c.categoria AS categoria,
-  n.nota,
-  n.id_semestre
+    aa.id_aluno,
+	al.nome AS nome,
+    m.id_materia,
+    m.materia,
+    a.id_atividade,
+    a.titulo AS atividade,
+    c.categoria,
+    n.nota,
+    n.id_semestre,
+    vm.media AS media_materia
 FROM tbl_nota n
 INNER JOIN tbl_atividade_aluno aa 
-  ON n.id_atividade_aluno = aa.id_atividade_aluno
+    ON n.id_atividade_aluno = aa.id_atividade_aluno
+INNER JOIN tbl_aluno al ON aa.id_aluno = al.id_aluno  
 INNER JOIN tbl_atividade a 
-  ON aa.id_atividade = a.id_atividade
+    ON aa.id_atividade = a.id_atividade
 INNER JOIN tbl_materia m 
-  ON a.id_materia = m.id_materia
+    ON a.id_materia = m.id_materia
 INNER JOIN tbl_categoria c 
-  ON a.id_categoria = c.id_categoria;
+    ON a.id_categoria = c.id_categoria
+LEFT JOIN vw_media_aluno_materia vm 
+    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia;
+
 
 SELECT * 
 FROM vw_desempenho_aluno 

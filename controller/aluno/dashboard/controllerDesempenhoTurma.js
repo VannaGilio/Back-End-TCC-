@@ -1,12 +1,12 @@
 const message = require('../../../modulo/config.js')
-const desempenhoAlunoDAO = require('../../../model/DAO/aluno/dashboard/desempenhoAlunoDAO.js')
+const desempenhoTurmaDAO = require('../../../model/DAO/aluno/dashboard/desempenhoTurmaDAO.js')
 
-const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
+const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) {
     try {
-        if(!idAluno || isNaN(idAluno)){
+        if(!idProfessor || isNaN(idProfessor)){
             return message.ERROR_REQUIRED_FIELDS
         }else{
-            let result = await desempenhoAlunoDAO.selectDesempenhoAluno(idAluno, idMateria, idSemestre)
+            let result = await desempenhoTurmaDAO.selectDesempenhoTurma(idProfessor, idTurma, idSemestre)
             let dados = {}
 
             if(!result && !Array.isArray(result)){
@@ -16,26 +16,24 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
             let desempenhoMap = new Map()
 
             for (const item of result) {
-                if(!desempenhoMap.has(item.id_materia)){
-                    desempenhoMap.set(item.id_materia, {
-                        aluno: {
-                            id_aluno: item.id_aluno,
-                            nome: item.nome
+                if(!desempenhoMap.has(item.id_turma)){
+                    desempenhoMap.set(item.id_turma, {
+                        turma: {
+                            id_turma: item.id_turma,
+                            turma: item.turma
                         },
                         frequencia: {
-                            frequencia: item.porcentagem_frequencia
+                            frequencia_turma: item.frequencia_turma
                         },
-                        materia_id: item.id_materia,
-                        materia: item.materia,
-                        atividades: [],
-                        media: item.media_materia
+                        media_turma: Number(item.media_turma),
+                        atividades: []
                     })
                 }
-                const materiaArray = desempenhoMap.get(item.id_materia)
+                const materiaArray = desempenhoMap.get(item.id_turma)
                 materiaArray.atividades.push({
                     atividade: item.atividade,
                     categoria: item.categoria,
-                    nota: Number(item.nota)
+                    media_atividade: Number(item.media_atividade)
                 })
             }
 
@@ -60,5 +58,5 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
 }
 
 module.exports = {
-    buscarDesempenhoAluno
+    buscarDesempenhoTurma
 }

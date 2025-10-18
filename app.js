@@ -385,11 +385,11 @@ app.post('/v1/analytica-ai/professor', async function (request, response){
     response.json(result)
 })
 
-/*********DESEMPENHO*********/
+/*********DESEMPENHO ALUNO*********/
 
 const controllerDesempenhoAluno = require('./controller/aluno/dashboard/controllerDesempenhoAluno.js')
 
-app.get('/v1/analytica-ai/desempenho/:idAluno', async function (request, response) {
+app.get('/v1/analytica-ai/desempenho/aluno/:idAluno', async function (request, response) {
     let idAluno = parseInt(request.params.idAluno)
     let idMateria = request.query.materia ? parseInt(request.query.materia): null
     let idSemestre = request.query.semestre ? parseInt(request.query.semestre): null
@@ -400,6 +400,20 @@ app.get('/v1/analytica-ai/desempenho/:idAluno', async function (request, respons
     response.json(result)
 })
 
+/*********DESEMPENHO TURMA*********/
+
+const controllerDesempenhoTurma = require('./controller/aluno/dashboard/controllerDesempenhoTurma.js')
+
+app.get('/v1/analytica-ai/desempenho/turma/:idProfessor', async function (request, response) {
+    let idProfessor = parseInt(request.params.idProfessor)
+    let idTurma = request.query.turma ? parseInt(request.query.turma): null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre): null
+
+    let result = await controllerDesempenhoTurma.buscarDesempenhoTurma(idProfessor, idTurma, idSemestre)
+
+    response.status(result.status_code)
+    response.json(result)
+})
 
 app.listen('8080', function(){
     console.log('API funcionando...')

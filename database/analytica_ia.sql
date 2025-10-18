@@ -809,6 +809,76 @@ GROUP BY
 -- VALUES (false, '2025-10-22', 3, 1);
 
 
+-- VIEW MEDIA ATIVIDADES TURMA
+
+DROP VIEW IF EXISTS vw_media_atividades_turma;
+CREATE VIEW vw_media_atividades_turma AS
+SELECT 
+    t.id_turma,
+    t.turma AS turma,
+    a.id_atividade,
+    a.titulo AS atividade,
+    c.categoria,
+    ROUND(AVG(n.nota), 2) AS media_atividade,
+    n.id_semestre
+FROM tbl_turma t
+JOIN tbl_aluno al ON al.id_turma = t.id_turma
+JOIN tbl_atividade_aluno aa ON aa.id_aluno = al.id_aluno
+JOIN tbl_atividade a ON a.id_atividade = aa.id_atividade
+JOIN tbl_categoria c ON c.id_categoria = a.id_categoria
+JOIN tbl_nota n ON n.id_atividade_aluno = aa.id_atividade_aluno
+GROUP BY t.id_turma, t.turma, a.id_atividade, c.categoria, n.id_semestre;   
+
+-- VIEW FREQUENCIA MEDIA TURMA 
+
+DROP VIEW IF EXISTS vw_frequencia_media_turma;
+CREATE VIEW vw_frequencia_media_turma AS
+SELECT 
+    t.id_turma,
+    t.turma AS turma,
+    st.id_semestre,
+    CONCAT(ROUND(AVG(f.presenca) * 100, 2), '%') AS frequencia_turma
+FROM tbl_turma t
+JOIN tbl_semestre_turma st 
+    ON st.id_turma = t.id_turma
+JOIN tbl_aluno al 
+    ON al.id_turma = t.id_turma
+JOIN tbl_frequencia f 
+    ON f.id_aluno = al.id_aluno
+GROUP BY 
+    t.id_turma, t.turma, st.id_semestre;
+
+-- INSERT INTO tbl_semestre_turma (id_turma, id_semestre)
+-- VALUES (2, 1);
+
+-- VIEW DESEMPENHO TURMA
+
+USE db_analytica_ai;
+
+DROP VIEW IF EXISTS vw_desempenho_turma;
+CREATE VIEW vw_desempenho_turma AS
+SELECT
+    tp.id_professor,
+    p.nome AS nome_professor,
+    ma.id_turma,
+    ma.turma,
+    ma.id_semestre,
+    mt.media_turma,
+    ma.atividade,
+    ma.categoria,
+    ma.media_atividade,
+    ft.frequencia_turma
+FROM vw_media_atividades_turma ma
+JOIN vw_frequencia_media_turma ft
+    ON ft.id_turma = ma.id_turma
+   AND ft.id_semestre = ma.id_semestre
+JOIN tbl_turma_professor tp
+    ON tp.id_turma = ma.id_turma
+JOIN tbl_professor p
+    ON p.id_professor = tp.id_professor;
+
+
+
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 
 CREATE VIEW vw_buscar_aluno AS 

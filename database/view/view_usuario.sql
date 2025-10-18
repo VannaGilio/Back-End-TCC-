@@ -58,7 +58,6 @@ SELECT
 FROM tbl_aluno a JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
 JOIN tbl_turma t ON a.id_turma = t.id_turma; 
 
-<<<<<<< HEAD
 CREATE VIEW buscarCategoria AS 
 SELECT
     id_categoria,

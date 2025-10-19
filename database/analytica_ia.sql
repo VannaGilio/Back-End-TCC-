@@ -592,7 +592,7 @@ BEGIN
     DECLARE v_id_usuario INT;
     SELECT nivel_usuario, id_usuario INTO v_nivel, v_id_usuario
     FROM tbl_usuarios
-    WHERE credencial = p_credencial AND senha = p_senha;
+    WHERE credencial = p_credencial AND BINARY senha = p_senha;
     IF v_id_usuario IS NOT NULL THEN
     -- A. PERFIL ALUNO
     IF v_nivel = 'aluno' THEN

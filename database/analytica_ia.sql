@@ -700,7 +700,8 @@ FROM tbl_turma;
 
 ---------------------------------
 
--- VIEW MEDIA MATERIA
+-- VIEW MEDIA MATERIA - ALUNO 
+
 DROP VIEW IF EXISTS vw_media_aluno_materia;
 CREATE VIEW vw_media_aluno_materia AS
 SELECT 
@@ -812,7 +813,7 @@ GROUP BY
 
 --------------------------------------------------------------
 
--- VIEW MEDIA ATIVIDADES TURMA
+-- VIEW MEDIA ATIVIDADES TURMA - DOCENTE
 
 DROP VIEW IF EXISTS vw_media_atividades_turma;
 CREATE VIEW vw_media_atividades_turma AS
@@ -878,6 +879,100 @@ JOIN tbl_turma_professor tp
     ON tp.id_turma = ma.id_turma
 JOIN tbl_professor p
     ON p.id_professor = tp.id_professor;
+
+----------------------------
+
+-- VIEW MEDIA TURMA MATERIA SEMESTRE - GESTÃO
+
+USE db_analytica_ai;
+
+DROP VIEW IF EXISTS vw_media_atividade_materia;
+CREATE VIEW vw_media_atividade_materia AS
+SELECT 
+    t.id_turma,
+    t.turma,
+    m.id_materia,
+    m.materia,
+    a.id_atividade,
+    a.titulo AS atividade,
+    c.categoria,
+    ROUND(AVG(n.nota), 2) AS media_atividade_materia,
+    n.id_semestre
+FROM 
+    tbl_nota n
+INNER JOIN tbl_atividade_aluno aa ON n.id_atividade_aluno = aa.id_atividade_aluno
+INNER JOIN tbl_atividade a ON aa.id_atividade = a.id_atividade
+INNER JOIN tbl_materia m ON a.id_materia = m.id_materia
+INNER JOIN tbl_categoria c ON c.id_categoria = a.id_categoria
+INNER JOIN tbl_aluno al ON aa.id_aluno = al.id_aluno
+INNER JOIN tbl_turma t ON al.id_turma = t.id_turma
+GROUP BY 
+    t.id_turma, m.id_materia, a.id_atividade, c.categoria, n.id_semestre;
+
+
+-- VIEW FREQUENCIA MEDIA TURMA MATERIA SEMESTRE
+
+DROP VIEW IF EXISTS vw_frequencia_turma_materia;
+CREATE OR REPLACE VIEW vw_frequencia_turma_materia AS
+SELECT 
+    t.id_turma,
+    t.turma,
+    m.id_materia,
+    m.materia,
+    st.id_semestre,
+    CONCAT(
+        ROUND(
+            AVG(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) * 100, 
+        2), '%'
+    ) AS frequencia_turma_materia
+FROM 
+    tbl_frequencia f
+INNER JOIN tbl_materia m 
+    ON f.id_materia = m.id_materia
+INNER JOIN tbl_aluno a 
+    ON f.id_aluno = a.id_aluno
+INNER JOIN tbl_turma t 
+    ON a.id_turma = t.id_turma
+INNER JOIN tbl_semestre_turma st 
+    ON st.id_turma = t.id_turma
+GROUP BY 
+    t.id_turma, m.id_materia, st.id_semestre;
+
+
+-- VIEW MEDIA DA MEDIA TURMA
+
+CREATE VIEW vw_media_turma_materia AS
+SELECT 
+    id_turma,
+    turma,
+    id_materia,
+    materia,
+    id_semestre,
+    ROUND(AVG(media_atividade_materia), 2) AS media_turma_materia
+FROM 
+    vw_media_atividade_materia
+GROUP BY 
+    id_turma, id_materia, id_semestre;
+
+-- VIEW DESEMPENHO
+
+DROP VIEW IF EXISTS vw_desempenho_turma_materia;
+CREATE VIEW vw_desempenho_turma_materia AS
+SELECT 
+    mt.id_turma,
+    mt.turma,
+    mt.id_materia,
+    mt.materia,
+    mt.id_semestre,
+    mt.media_turma_materia,
+    fm.frequencia_turma_materia
+FROM 
+    vw_media_turma_materia mt
+LEFT JOIN 
+    vw_frequencia_turma_materia fm 
+    ON mt.id_turma = fm.id_turma 
+   AND mt.id_materia = fm.id_materia
+   AND mt.id_semestre = fm.id_semestre;
 
 ----------------------------
 

@@ -33,6 +33,20 @@ CREATE TABLE tbl_gestao (
         ON DELETE CASCADE
 );
 
+CREATE TABLE tbl_gestao_turma (
+    id_gestao_turma INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    id_gestao INT NOT NULL,
+    id_turma INT NOT NULL,
+    CONSTRAINT fk_gestao_turma
+        FOREIGN KEY (id_gestao)
+        REFERENCES tbl_gestao (id_gestao)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_turma_gestao
+        FOREIGN KEY (id_turma)
+        REFERENCES tbl_turma (id_turma)
+        ON DELETE CASCADE
+);
+
 CREATE TABLE tbl_professor (
     id_professor INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(80) NOT NULL,
@@ -941,10 +955,13 @@ GROUP BY
 
 -- VIEW MEDIA DA MEDIA TURMA
 
+DROP VIEW IF EXISTS vw_media_turma_materia;
 CREATE VIEW vw_media_turma_materia AS
 SELECT 
     id_turma,
     turma,
+    atividade,
+    categoria,
     id_materia,
     materia,
     id_semestre,
@@ -952,7 +969,7 @@ SELECT
 FROM 
     vw_media_atividade_materia
 GROUP BY 
-    id_turma, id_materia, id_semestre;
+    id_turma, turma, atividade, categoria, id_materia, materia, id_semestre;
 
 -- VIEW DESEMPENHO
 
@@ -965,14 +982,35 @@ SELECT
     mt.materia,
     mt.id_semestre,
     mt.media_turma_materia,
-    fm.frequencia_turma_materia
+    fm.frequencia_turma_materia,
+    ma.id_atividade,
+    ma.atividade,
+    ma.categoria,
+    ma.media_atividade_materia
 FROM 
     vw_media_turma_materia mt
 LEFT JOIN 
     vw_frequencia_turma_materia fm 
-    ON mt.id_turma = fm.id_turma 
+    ON mt.id_turma = fm.id_turma
    AND mt.id_materia = fm.id_materia
-   AND mt.id_semestre = fm.id_semestre;
+   AND mt.id_semestre = fm.id_semestre
+LEFT JOIN 
+    vw_media_atividade_materia ma 
+    ON mt.id_turma = ma.id_turma
+   AND mt.id_materia = ma.id_materia
+   AND mt.id_semestre = ma.id_semestre;
+
+-- INSERT INTO tbl_gestao (
+-- 	nome,
+--     telefone,
+--     email,
+--     id_usuario
+-- )VALUES(
+-- 	"Jheniffer Rodrigues",
+--     "(11) 9 1823-7602",
+--     "gestao@gmail.com",
+--     8
+-- );
 
 ----------------------------
 

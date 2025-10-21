@@ -419,7 +419,17 @@ app.get('/v1/analytica-ai/desempenho/turma/:idProfessor', async function (reques
 
 const controllerDesempenhoMateriaTurma = require('./controller/aluno/dashboard/controllerDesempenhoMateriaTurma.js')
 
+app.get('/v1/analytica-ai/desempenho/gestao/turma-materia/:idGestao', async function (request, response) {
+    let idGestao = parseInt(request.params.idGestao)
+    let idTurma = request.query.turma ? parseInt(request.query.turma): null
+    let idMateria = request.query.materia ? parseInt(request.query.materia): null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre): null
 
+    let result = await controllerDesempenhoMateriaTurma.buscarDesempenhoTurmaMateria(idGestao, idTurma, idMateria, idSemestre)
+
+    response.status(result.status_code)
+    response.json(result)
+})
 
 app.listen('8080', function(){
     console.log('API funcionando...')

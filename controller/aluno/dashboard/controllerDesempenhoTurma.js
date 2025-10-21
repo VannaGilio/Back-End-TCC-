@@ -25,7 +25,7 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                         frequencia: {
                             frequencia_turma: item.frequencia_turma
                         },
-                        media_turma: Number(item.media_turma),
+                        media_turma: Number(item.media_atividade),
                         atividades: []
                     })
                 }

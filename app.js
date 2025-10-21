@@ -415,6 +415,12 @@ app.get('/v1/analytica-ai/desempenho/turma/:idProfessor', async function (reques
     response.json(result)
 })
 
+/*********DESEMPENHO MATERIA TURMA*********/
+
+const controllerDesempenhoMateriaTurma = require('./controller/aluno/dashboard/controllerDesempenhoMateriaTurma.js')
+
+
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

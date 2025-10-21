@@ -6,7 +6,7 @@ const selectDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
         let sql = `
             SELECT * FROM vw_desempenho_turma WHERE id_professor = ${idProfessor}
         `
-        if(idSemestre){
+        if(idTurma){
             sql += ` AND id_turma = ${idTurma}`
         }
         if(idSemestre){

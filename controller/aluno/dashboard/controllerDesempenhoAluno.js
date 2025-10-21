@@ -25,8 +25,10 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
                         frequencia: {
                             frequencia: item.porcentagem_frequencia
                         },
-                        materia_id: item.id_materia,
-                        materia: item.materia,
+                        materia: {
+                            materia_id: item.id_materia,
+                            materia: item.materia,
+                        },
                         atividades: [],
                         media: item.media_materia
                     })

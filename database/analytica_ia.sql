@@ -698,6 +698,8 @@ SELECT
     turma
 FROM tbl_turma;
 
+---------------------------------
+
 -- VIEW MEDIA MATERIA
 DROP VIEW IF EXISTS vw_media_aluno_materia;
 CREATE VIEW vw_media_aluno_materia AS
@@ -800,7 +802,7 @@ SELECT
     COUNT(*) AS total_aulas,
     CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
 FROM
-    tbl_frequencia
+    tbl_frequencia f
 GROUP BY
     id_aluno,
     id_materia;
@@ -808,6 +810,7 @@ GROUP BY
 -- INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia)
 -- VALUES (false, '2025-10-22', 3, 1);
 
+--------------------------------------------------------------
 
 -- VIEW MEDIA ATIVIDADES TURMA
 
@@ -851,10 +854,10 @@ GROUP BY
 -- INSERT INTO tbl_semestre_turma (id_turma, id_semestre)
 -- VALUES (2, 1);
 
+-- INSERT INTO tbl_turma_professor (id_turma, id_professor) 
+-- VALUES (1, 5);
+
 -- VIEW DESEMPENHO TURMA
-
-USE db_analytica_ai;
-
 DROP VIEW IF EXISTS vw_desempenho_turma;
 CREATE VIEW vw_desempenho_turma AS
 SELECT
@@ -863,7 +866,6 @@ SELECT
     ma.id_turma,
     ma.turma,
     ma.id_semestre,
-    mt.media_turma,
     ma.atividade,
     ma.categoria,
     ma.media_atividade,
@@ -877,7 +879,7 @@ JOIN tbl_turma_professor tp
 JOIN tbl_professor p
     ON p.id_professor = tp.id_professor;
 
-
+----------------------------
 
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 

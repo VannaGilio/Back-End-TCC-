@@ -888,7 +888,16 @@ SELECT
     MA.atividade,
     MA.categoria,
     MA.media_atividade,
-    FT.frequencia_turma
+    FT.frequencia_turma,
+    (
+        SELECT ROUND(AVG(MA_SUB.media_atividade), 2)
+        FROM vw_media_atividades_turma MA_SUB
+        JOIN tbl_atividade TPA_SUB ON TPA_SUB.id_atividade = MA_SUB.id_atividade
+        WHERE 
+            MA_SUB.id_turma = MA.id_turma
+            AND MA_SUB.id_semestre = MA.id_semestre 
+            AND TPA_SUB.id_professor = TPA.id_professor 
+    ) AS media_geral_professor
 FROM 
     vw_media_atividades_turma MA
 JOIN 
@@ -900,8 +909,7 @@ JOIN
     ON TPA.id_atividade = MA.id_atividade 
 JOIN 
     tbl_professor P
-    ON P.id_professor = TPA.id_professor 
-;
+    ON P.id_professor = TPA.id_professor;
 
 ----------------------------
 

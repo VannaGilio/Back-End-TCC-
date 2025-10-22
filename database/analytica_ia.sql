@@ -875,27 +875,33 @@ GROUP BY
 -- INSERT INTO tbl_turma_professor (id_turma, id_professor) 
 -- VALUES (1, 5);
 
--- VIEW DESEMPENHO TURMA
+-- VIEW DESEMPENHO TURMA (CORRIGIDA)
 DROP VIEW IF EXISTS vw_desempenho_turma;
 CREATE VIEW vw_desempenho_turma AS
 SELECT
-    tp.id_professor,
-    p.nome AS nome_professor,
-    ma.id_turma,
-    ma.turma,
-    ma.id_semestre,
-    ma.atividade,
-    ma.categoria,
-    ma.media_atividade,
-    ft.frequencia_turma
-FROM vw_media_atividades_turma ma
-JOIN vw_frequencia_media_turma ft
-    ON ft.id_turma = ma.id_turma
-   AND ft.id_semestre = ma.id_semestre
-JOIN tbl_turma_professor tp
-    ON tp.id_turma = ma.id_turma
-JOIN tbl_professor p
-    ON p.id_professor = tp.id_professor;
+    TPA.id_professor, 
+    P.nome AS nome_professor,
+
+    MA.id_turma,
+    MA.turma,
+    MA.id_semestre,
+    MA.atividade,
+    MA.categoria,
+    MA.media_atividade,
+    FT.frequencia_turma
+FROM 
+    vw_media_atividades_turma MA
+JOIN 
+    vw_frequencia_media_turma FT
+    ON FT.id_turma = MA.id_turma
+   AND FT.id_semestre = MA.id_semestre
+JOIN 
+    tbl_atividade TPA
+    ON TPA.id_atividade = MA.id_atividade 
+JOIN 
+    tbl_professor P
+    ON P.id_professor = TPA.id_professor 
+;
 
 ----------------------------
 

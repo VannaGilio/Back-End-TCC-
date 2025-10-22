@@ -90,8 +90,6 @@ const loginUsuario = async function(usuario){
 
         let usuarioFormatado = {};
 
-        console.log(result)
-
         if (nivel_usuario === 'aluno') {
             usuarioFormatado = {
                 id_usuario: rows.f0,

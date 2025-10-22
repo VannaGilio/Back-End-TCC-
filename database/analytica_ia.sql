@@ -747,6 +747,7 @@ SELECT
     n.id_semestre,
     vm.media AS media_materia,
     f.total_presenca,
+    f.total_falta,
     f.total_aulas,
     f.porcentagem_frequencia
 FROM tbl_nota n
@@ -810,11 +811,12 @@ SELECT * FROM tbl_nota;
 
 -- VIEW FREQUENCIA
 
-CREATE VIEW vw_frequencia_por_aluno_materia AS
+CREATE OR REPLACE VIEW vw_frequencia_por_aluno_materia AS
 SELECT
     id_aluno,
     id_materia,
     COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
+    COUNT(CASE WHEN f.presenca = 0 THEN 1 END) AS total_falta,
     COUNT(*) AS total_aulas,
     CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
 FROM

@@ -90,42 +90,41 @@ const loginUsuario = async function(usuario){
 
         let usuarioFormatado = {};
 
+        console.log(result)
+
         if (nivel_usuario === 'aluno') {
             usuarioFormatado = {
                 id_usuario: rows.f0,
-                credencial: rows.f1,
-                senha: rows.f2,
+                id_perfil: rows.f1,
+                credencial: rows.f2,
                 nivel_usuario: nivel_usuario,
-                id_aluno: rows.f4,
-                nome: rows.f5, 
-                email: rows.f6,
-                telefone: rows.f7,
-                data_nascimento: rows.f8,
-                matricula: rows.f9,
-                id_turma: rows.f10,
+                nome: rows.f4, 
+                email: rows.f5,
+                telefone: rows.f6,
+                data_nascimento: rows.f7,
+                matricula: rows.f8,
+                id_turma: rows.f9,
             }
         } else if (nivel_usuario === 'professor') {
             usuarioFormatado = {
                 id_usuario: rows.f0,
-                credencial: rows.f1, 
-                senha: rows.f2,
+                id_perfil: rows.f1,
+                credencial: rows.f2, 
                 nivel_usuario: nivel_usuario,
-                id_professor: rows.f4,
-                nome: rows.f5, 
-                email: rows.f6,
-                telefone: rows.f7,
-                data_nascimento: rows.f8
+                nome: rows.f4, 
+                email: rows.f5,
+                telefone: rows.f6,
+                data_nascimento: rows.f7
             }
         } else if (nivel_usuario === 'gestão') {
             usuarioFormatado = {
                 id_usuario: rows.f0,
-                credencial: rows.f1,
-                senha: rows.f2, 
+                id_perfil: rows.f1,
+                credencial: rows.f2,
                 nivel_usuario: nivel_usuario,
-                id_gestao: rows.f4,
-                nome: rows.f5,
-                email: rows.f6,
-                telefone: rows.f7
+                nome: rows.f4,
+                email: rows.f5,
+                telefone: rows.f6
             }
         }
         

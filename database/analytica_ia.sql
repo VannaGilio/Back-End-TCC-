@@ -595,74 +595,75 @@ END$
 ------------------------------------------------------------
 
 -- LOGIN USUÁRIO
-DELIMITER $
-DROP PROCEDURE IF EXISTS sp_login_usuario;
+DELIMITER $$
+DROP PROCEDURE IF EXISTS sp_login_usuario $$
 CREATE PROCEDURE sp_login_usuario (
     IN p_credencial VARCHAR(11),
-    IN p_senha VARCHAR(20) 
+    IN p_senha VARCHAR(20)
 )
 BEGIN
     DECLARE v_nivel VARCHAR(10);
     DECLARE v_id_usuario INT;
-    SELECT nivel_usuario, id_usuario INTO v_nivel, v_id_usuario
-    FROM tbl_usuarios
-    WHERE credencial = p_credencial AND BINARY senha = p_senha;
-    IF v_id_usuario IS NOT NULL THEN
-    -- A. PERFIL ALUNO
-    IF v_nivel = 'aluno' THEN
-        SELECT
-        U.id_usuario,
-        U.credencial,
-        U.senha,
-        U.nivel_usuario,
-        A.id_aluno,
-        A.nome,
-        A.email,
-        A.telefone,
 
-        A.data_nascimento,
-        A.matricula,
-        A.id_turma
-        FROM
-        tbl_usuarios U
-        INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
-        WHERE U.id_usuario = v_id_usuario;
+    -- Verifica se o usuário existe
+    SELECT nivel_usuario, id_usuario 
+    INTO v_nivel, v_id_usuario
+    FROM tbl_usuarios
+    WHERE credencial = p_credencial AND senha = p_senha COLLATE utf8mb4_bin;
+
+    IF v_id_usuario IS NOT NULL THEN
+        
+        -- A. PERFIL ALUNO
+        IF v_nivel = 'aluno' THEN
+            SELECT
+                U.id_usuario,
+                A.id_aluno AS id_perfil,
+                U.credencial,
+                U.nivel_usuario,
+                A.nome,
+                A.email,
+                A.telefone,
+                A.data_nascimento,
+                A.matricula,
+                A.id_turma
+            FROM tbl_usuarios U
+            INNER JOIN tbl_aluno A ON U.id_usuario = A.id_usuario
+            WHERE U.id_usuario = v_id_usuario;
+        
         -- B. PERFIL PROFESSOR
         ELSEIF v_nivel = 'professor' THEN
-        SELECT
-        U.id_usuario,
-        U.credencial,
-        U.senha,
-        U.nivel_usuario,
-        P.id_professor,
-        P.nome,
-        P.email,
-        P.telefone,
-        P.data_nascimento
-        FROM
-        tbl_usuarios U
-        INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
-        WHERE U.id_usuario = v_id_usuario;
+            SELECT
+                U.id_usuario,
+                P.id_professor AS id_perfil,
+                U.credencial,
+                U.nivel_usuario,
+                P.nome,
+                P.email,
+                P.telefone,
+                P.data_nascimento
+            FROM tbl_usuarios U
+            INNER JOIN tbl_professor P ON U.id_usuario = P.id_usuario
+            WHERE U.id_usuario = v_id_usuario;
+        
         -- C. PERFIL GESTÃO
         ELSEIF v_nivel = 'gestão' THEN
-        SELECT
-        U.id_usuario,
-        U.credencial,
-        U.senha,
-        U.nivel_usuario,
-        G.id_gestao,
-        G.nome,
-        G.email,
-        G.telefone
-        FROM
-        tbl_usuarios U
-        INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
-        WHERE U.id_usuario = v_id_usuario;
-    END IF;
+            SELECT
+                U.id_usuario,
+                G.id_gestao AS id_perfil,
+                U.credencial,
+                U.nivel_usuario,
+                G.nome,
+                G.email,
+                G.telefone
+            FROM tbl_usuarios U
+            INNER JOIN tbl_gestao G ON U.id_usuario = G.id_usuario
+            WHERE U.id_usuario = v_id_usuario;
+        END IF;
+
     ELSE
         SELECT NULL AS autenticacao_falhou;
     END IF;
-END$
+END $$
 
 -- TESTANDO LOGIN
 -- CALL sp_login_usuario('24122460', 'senha');

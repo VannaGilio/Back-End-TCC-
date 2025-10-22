@@ -917,7 +917,7 @@ JOIN
 
 USE db_analytica_ai;
 
-DROP VIEW IF EXISTS vw_media_atividade_materia;
+  DROP VIEW IF EXISTS vw_media_atividade_materia;
 CREATE VIEW vw_media_atividade_materia AS
 SELECT 
     g.id_gestao,
@@ -928,8 +928,10 @@ SELECT
     m.materia,
     a.id_atividade,
     a.titulo AS atividade,
+    a.descricao AS descricao_atividade, -- <<< CAMPO ADICIONADO
     c.categoria,
-    ROUND(AVG(n.nota), 2) AS media_atividade_materia,
+    -- Forçando o tipo DECIMAL(10, 2) para garantir casas decimais
+    CAST(ROUND(AVG(n.nota), 2) AS DECIMAL(10, 2)) AS media_atividade_materia,
     n.id_semestre
 FROM 
     tbl_nota n
@@ -945,14 +947,14 @@ GROUP BY
     g.id_gestao, g.nome,
     t.id_turma, t.turma,
     m.id_materia, m.materia,
-    a.id_atividade, a.titulo,
+    a.id_atividade, a.titulo, a.descricao, -- <<< ADICIONADO AO GROUP BY
     c.categoria,
     n.id_semestre;
 
 
 -- VIEW FREQUENCIA MEDIA TURMA MATERIA SEMESTRE
 
-DROP VIEW IF EXISTS vw_frequencia_turma_materia;
+ DROP VIEW IF EXISTS vw_frequencia_turma_materia;
 CREATE OR REPLACE VIEW vw_frequencia_turma_materia AS
 SELECT 
     t.id_turma,
@@ -960,6 +962,12 @@ SELECT
     m.id_materia,
     m.materia,
     st.id_semestre,
+    
+    -- CONTADORES: Usamos CAST(COUNT AS SIGNED) para evitar o erro BigInt (o 'n' no Node.js)
+    CAST(SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS SIGNED) AS total_presenca, -- <<< CAMPO NOVO
+    CAST(SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS SIGNED) AS total_falta,    -- <<< CAMPO NOVO
+    CAST(COUNT(*) AS SIGNED) AS total_aulas,                                            -- <<< CAMPO NOVO
+    
     CONCAT(
         ROUND(
             AVG(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) * 100, 
@@ -976,12 +984,11 @@ INNER JOIN tbl_turma t
 INNER JOIN tbl_semestre_turma st 
     ON st.id_turma = t.id_turma
 GROUP BY 
-    t.id_turma, m.id_materia, st.id_semestre;
-
+    t.id_turma, t.turma, m.id_materia, m.materia, st.id_semestre;
 
 -- VIEW MEDIA DA MEDIA TURMA
   
-DROP VIEW IF EXISTS vw_media_turma_materia;
+ DROP VIEW IF EXISTS vw_media_turma_materia;
 CREATE VIEW vw_media_turma_materia AS
 SELECT 
     ma.id_gestao,
@@ -991,7 +998,8 @@ SELECT
     ma.id_materia,
     ma.materia,
     ma.id_semestre,
-    ROUND(AVG(ma.media_atividade_materia), 2) AS media_turma_materia
+    -- FORÇANDO FLOAT NO CÁLCULO
+    ROUND(AVG(ma.media_atividade_materia * 1.0), 2) AS media_turma_materia
 FROM 
     vw_media_atividade_materia ma
 GROUP BY 
@@ -1017,8 +1025,12 @@ SELECT
     mt.id_semestre,
     mt.media_turma_materia,
     fm.frequencia_turma_materia,
+    fm.total_presenca, 
+    fm.total_falta,
+    fm.total_aulas,
     ma.id_atividade,
     ma.atividade,
+    ma.descricao_atividade,
     ma.categoria,
     ma.media_atividade_materia
 FROM 

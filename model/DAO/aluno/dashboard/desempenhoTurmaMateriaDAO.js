@@ -17,8 +17,6 @@ const selectDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
         }
 
         let result = await prisma.$queryRawUnsafe(sql)
-
-        console.log(result);
         
         if(result)
             return result

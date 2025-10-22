@@ -33,7 +33,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                         frequencia: {
                             frequencia_turma: item.frequencia_turma_materia
                         },
-                        media_atividade: Number(item.media_atividade_materia),
+                        media_geral: Number(item.media_turma_materia),
                         atividades: []
                     })
                 }
@@ -41,7 +41,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                 materiaArray.atividades.push({
                     atividade: item.atividade,
                     categoria: item.categoria,
-                    media_turma: Number(item.media_turma_materia)
+                    media_turma: Number(item.media_atividade_materia)
                 })
             }
 

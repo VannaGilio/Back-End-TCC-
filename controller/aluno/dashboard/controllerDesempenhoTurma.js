@@ -18,6 +18,10 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
             for (const item of result) {
                 if(!desempenhoMap.has(item.id_turma)){
                     desempenhoMap.set(item.id_turma, {
+                        professor: {
+                            id_professor: item.id_professor,
+                            nome: item.nome_professor
+                        },
                         turma: {
                             id_turma: item.id_turma,
                             turma: item.turma

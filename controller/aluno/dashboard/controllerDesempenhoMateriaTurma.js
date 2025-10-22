@@ -20,7 +20,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                     desempenhoMap.set(item.id_turma, {
                         gestao: {
                             id_gestao: item.id_gestao,
-                            gestao: item.nome
+                            nome: item.nome_gestao
                         },
                         turma: {
                             id_turma: item.id_turma,

@@ -4,7 +4,7 @@ const prisma = new PrismaClient()
 const selectDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateria, idSemestre) {
     try {
         let sql = `
-            SELECT * FROM vw_desempenho_turma_materia WHERE 1=1
+            SELECT * FROM vw_desempenho_turma_materia WHERE id_gestao = ${idGestao}
         `
         if(idTurma){
             sql += ` AND id_turma = ${idTurma}`

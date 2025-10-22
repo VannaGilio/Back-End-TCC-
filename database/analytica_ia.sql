@@ -903,6 +903,8 @@ USE db_analytica_ai;
 DROP VIEW IF EXISTS vw_media_atividade_materia;
 CREATE VIEW vw_media_atividade_materia AS
 SELECT 
+    g.id_gestao,
+    g.nome AS nome,
     t.id_turma,
     t.turma,
     m.id_materia,
@@ -920,8 +922,15 @@ INNER JOIN tbl_materia m ON a.id_materia = m.id_materia
 INNER JOIN tbl_categoria c ON c.id_categoria = a.id_categoria
 INNER JOIN tbl_aluno al ON aa.id_aluno = al.id_aluno
 INNER JOIN tbl_turma t ON al.id_turma = t.id_turma
+INNER JOIN tbl_gestao_turma tg ON t.id_turma = tg.id_turma
+INNER JOIN tbl_gestao g ON tg.id_gestao = g.id_gestao
 GROUP BY 
-    t.id_turma, m.id_materia, a.id_atividade, c.categoria, n.id_semestre;
+    g.id_gestao, g.nome,
+    t.id_turma, t.turma,
+    m.id_materia, m.materia,
+    a.id_atividade, a.titulo,
+    c.categoria,
+    n.id_semestre;
 
 
 -- VIEW FREQUENCIA MEDIA TURMA MATERIA SEMESTRE
@@ -954,28 +963,36 @@ GROUP BY
 
 
 -- VIEW MEDIA DA MEDIA TURMA
-
+  
 DROP VIEW IF EXISTS vw_media_turma_materia;
 CREATE VIEW vw_media_turma_materia AS
 SELECT 
-    id_turma,
-    turma,
-    atividade,
-    categoria,
-    id_materia,
-    materia,
-    id_semestre,
-    ROUND(AVG(media_atividade_materia), 2) AS media_turma_materia
+    ma.id_gestao,
+    ma.nome,
+    ma.id_turma,
+    ma.turma,
+    ma.id_materia,
+    ma.materia,
+    ma.id_semestre,
+    ROUND(AVG(ma.media_atividade_materia), 2) AS media_turma_materia
 FROM 
-    vw_media_atividade_materia
+    vw_media_atividade_materia ma
 GROUP BY 
-    id_turma, turma, atividade, categoria, id_materia, materia, id_semestre;
+    ma.id_gestao,
+    ma.nome,
+    ma.id_turma,
+    ma.turma,
+    ma.id_materia,
+    ma.materia,
+    ma.id_semestre;
 
 -- VIEW DESEMPENHO
 
 DROP VIEW IF EXISTS vw_desempenho_turma_materia;
 CREATE VIEW vw_desempenho_turma_materia AS
 SELECT 
+    g.id_gestao,
+    g.nome AS nome_gestao,
     mt.id_turma,
     mt.turma,
     mt.id_materia,
@@ -988,17 +1005,20 @@ SELECT
     ma.categoria,
     ma.media_atividade_materia
 FROM 
-    vw_media_turma_materia mt
+    tbl_gestao g
+LEFT JOIN 
+    vw_media_turma_materia mt 
+        ON g.id_gestao = mt.id_gestao
 LEFT JOIN 
     vw_frequencia_turma_materia fm 
-    ON mt.id_turma = fm.id_turma
-   AND mt.id_materia = fm.id_materia
-   AND mt.id_semestre = fm.id_semestre
+        ON mt.id_turma = fm.id_turma
+       AND mt.id_materia = fm.id_materia
+       AND mt.id_semestre = fm.id_semestre
 LEFT JOIN 
     vw_media_atividade_materia ma 
-    ON mt.id_turma = ma.id_turma
-   AND mt.id_materia = ma.id_materia
-   AND mt.id_semestre = ma.id_semestre;
+        ON mt.id_turma = ma.id_turma
+       AND mt.id_materia = ma.id_materia
+       AND mt.id_semestre = ma.id_semestre;
 
 -- INSERT INTO tbl_gestao (
 -- 	nome,
@@ -1011,6 +1031,13 @@ LEFT JOIN
 --     "gestao@gmail.com",
 --     8
 -- );
+
+-- insert into tbl_gestao_turma(
+--     id_gestao,
+--     id_turma
+-- )value
+-- 	(2, 2),
+--     (2, 1);
 
 ----------------------------
 

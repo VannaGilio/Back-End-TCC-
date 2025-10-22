@@ -716,11 +716,12 @@ FROM tbl_turma;
 
 -- VIEW MEDIA MATERIA - ALUNO 
 
-DROP VIEW IF EXISTS vw_media_aluno_materia;
-CREATE VIEW vw_media_aluno_materia AS
+DROP VIEW IF EXISTS vw_media_aluno_materia_semestre;
+CREATE VIEW vw_media_aluno_materia_semestre AS
 SELECT 
     aa.id_aluno,
     m.id_materia,
+    n.id_semestre,
     AVG(n.nota) AS media
 FROM tbl_nota n
 INNER JOIN tbl_atividade_aluno aa 
@@ -729,7 +730,7 @@ INNER JOIN tbl_atividade a
     ON aa.id_atividade = a.id_atividade
 INNER JOIN tbl_materia m 
     ON a.id_materia = m.id_materia
-GROUP BY aa.id_aluno, m.id_materia;
+GROUP BY aa.id_aluno, m.id_materia, n.id_semestre;
 
 -- VIEW DESEMPENHO DO ALUNO
 DROP VIEW IF EXISTS vw_desempenho_aluno;
@@ -758,8 +759,8 @@ INNER JOIN tbl_materia m
     ON a.id_materia = m.id_materia
 INNER JOIN tbl_categoria c 
     ON a.id_categoria = c.id_categoria
-LEFT JOIN vw_media_aluno_materia vm 
-    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia
+LEFT JOIN vw_media_aluno_materia_semestre vm 
+    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia AND vm.id_semestre = n.id_semestre
 LEFT JOIN vw_frequencia_por_aluno_materia f
     ON f.id_aluno = aa.id_aluno AND f.id_materia = m.id_materia;
 

@@ -859,32 +859,32 @@ SELECT
     t.id_turma,
     t.turma,
     st.id_semestre,
-    
-    -- Total de alunos na turma
+
     COUNT(DISTINCT al.id_aluno) AS total_alunos,
 
-    -- Total de aulas da turma (datas distintas em que houve frequência registrada)
-    COUNT(DISTINCT f.data_frequencia) AS total_aulas,
+    COUNT(DISTINCT fq.data_frequencia) AS total_aulas,
 
-    -- Total de presenças e faltas
-    SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS total_presenca,
-    SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS total_falta,
+    -- Presenças únicas por aluno/data
+    SUM(fq.presenca) AS total_presenca,
+    SUM(1 - fq.presenca) AS total_falta,
 
-    -- Frequência média: presenças / (total_alunos * total_aulas)
+    -- Frequência média: total_presenca / (total_alunos * total_aulas)
     CONCAT(
         ROUND(
-            SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) / 
-            (COUNT(DISTINCT al.id_aluno) * COUNT(DISTINCT f.data_frequencia)) * 100,
+            SUM(fq.presenca) / (COUNT(DISTINCT al.id_aluno) * COUNT(DISTINCT fq.data_frequencia)) * 100,
         2), '%'
     ) AS frequencia_turma
 
 FROM tbl_turma t
-JOIN tbl_semestre_turma st
-    ON st.id_turma = t.id_turma
-JOIN tbl_aluno al
-    ON al.id_turma = t.id_turma
-JOIN tbl_frequencia f
-    ON f.id_aluno = al.id_aluno
+JOIN tbl_semestre_turma st ON st.id_turma = t.id_turma
+JOIN tbl_aluno al ON al.id_turma = t.id_turma
+JOIN (
+    -- pega apenas uma linha por aluno por data
+    SELECT id_aluno, data_frequencia, MAX(presenca) AS presenca
+    FROM tbl_frequencia
+    GROUP BY id_aluno, data_frequencia
+) fq ON fq.id_aluno = al.id_aluno
+
 GROUP BY t.id_turma, t.turma, st.id_semestre;
 
 -- INSERT INTO tbl_semestre_turma (id_turma, id_semestre)

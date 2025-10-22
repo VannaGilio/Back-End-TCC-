@@ -40,7 +40,7 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                 materiaArray.atividades.push({
                     atividade: item.atividade,
                     categoria: item.categoria,
-                    media_atividade: Number(item.media_atividade)
+                    nota: Number(item.media_atividade)
                 })
             }
 

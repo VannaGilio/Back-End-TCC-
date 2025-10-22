@@ -50,7 +50,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                     atividade: item.atividade,
                     descricao: item.descricao_atividade, 
                     categoria: item.categoria,
-                    media_turma: Number(item.media_atividade_materia)
+                    nota: Number(item.media_atividade_materia)
                 })
             }
 
@@ -61,7 +61,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                     const soma = medias.reduce((acc, curr) => acc + curr, 0);
                     const mediaCalculada = parseFloat((soma / medias.length).toFixed(2));
                     
-                    turmaMateria.media_geral = mediaCalculada;
+                    turmaMateria.media = mediaCalculada;
                 }
                 
                 return turmaMateria;

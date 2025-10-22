@@ -1122,3 +1122,221 @@ WHERE
 COALESCE(a.email, p.email, g.email) IS NOT NULL;
 
 select * from vw_buscar_usuario_by_credencial where credencial = "24122460";
+
+--------------------------------------------------------------------------
+
+-- POPULANDO AS TABELAS COM DADOS
+
+-- Desativa a checagem de chaves estrangeiras para permitir o TRUNCATE
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Limpeza de Tabelas de Dados (Ordem inversa das dependências é mais seguro, mas com o FK_CHECKS=0, não é estritamente necessário)
+TRUNCATE TABLE tbl_nota;
+TRUNCATE TABLE tbl_frequencia;
+TRUNCATE TABLE tbl_observacao;
+TRUNCATE TABLE tbl_insights;
+TRUNCATE TABLE tbl_relatorio;
+TRUNCATE TABLE tbl_atividade_aluno;
+TRUNCATE TABLE tbl_atividade;
+TRUNCATE TABLE tbl_recurso_aluno;
+TRUNCATE TABLE tbl_recursos;
+TRUNCATE TABLE tbl_turma_professor;
+TRUNCATE TABLE tbl_semestre_turma;
+TRUNCATE TABLE tbl_gestao_turma;
+TRUNCATE TABLE tbl_aluno;
+TRUNCATE TABLE tbl_professor;
+TRUNCATE TABLE tbl_gestao;
+
+-- Limpeza de Tabelas de Estrutura e Usuários
+TRUNCATE TABLE tbl_materia;
+TRUNCATE TABLE tbl_categoria;
+TRUNCATE TABLE tbl_semestre;
+TRUNCATE TABLE tbl_turma;
+TRUNCATE TABLE tbl_usuarios;
+
+-- Reativa a checagem de chaves estrangeiras
+SET FOREIGN_KEY_CHECKS = 1;
+
+SELECT 'Todas as tabelas foram limpas e auto-incrementos resetados.' AS Status;
+
+-- -------------------------------------------------------------------------------------
+
+CALL sp_inserir_turma('1º Período - A');     -- ID_TURMA = 1
+CALL sp_inserir_turma('1º Período - B');     -- ID_TURMA = 2
+CALL sp_inserir_turma('2º Período - C');     -- ID_TURMA = 3
+
+select * from tbl_turma;
+
+CALL sp_inserir_semestre('2024.1');            -- ID_SEMESTRE = 1
+CALL sp_inserir_semestre('2024.2');            -- ID_SEMESTRE = 2
+
+select * from tbl_semestre;
+
+CALL sp_inserir_categoria('Prova');             -- ID_CATEGORIA = 1
+CALL sp_inserir_categoria('Trabalho');          -- ID_CATEGORIA = 2
+CALL sp_inserir_categoria('Teste Rápido');      -- ID_CATEGORIA = 3
+
+select * from tbl_categoria;
+
+CALL sp_inserir_materia('Matemática', '#EA4335');     -- ID_MATERIA = 1 (Exatas)
+CALL sp_inserir_materia('Português', '#4285F4');      -- ID_MATERIA = 2 (Humanas)
+CALL sp_inserir_materia('História', '#FCDD03');       -- ID_MATERIA = 3 (Humanas)
+CALL sp_inserir_materia('Biologia', '#34A853');       -- ID_MATERIA = 4 (Biológicas)
+CALL sp_inserir_materia('Física', '#1A73E8');        -- ID_MATERIA = 5 (Exatas)
+CALL sp_inserir_materia('Artes', '#FF6D00');          -- ID_MATERIA = 6 (Humanas)
+
+select * from tbl_materia;
+
+-- GESTÃO (ID_GESTAO = 1)
+CALL sp_cadastrar_usuario_completo('10010010', 'gestao', 'gestão', 'Ana Gestora', 'ana.g@escola.com', '100100010', NULL, NULL, NULL);
+
+-- PROFESSORES (3)
+CALL sp_cadastrar_usuario_completo('50150150', 'profMat', 'professor', 'Prof. Carlos (Mat)', 'carlos.m@escola.com', '50150150', '1975-03-10', NULL, NULL); -- ID_PROFESSOR = 1
+CALL sp_cadastrar_usuario_completo('50250250', 'profPort', 'professor', 'Prof. Claudia (Port)', 'claudia.p@escola.com', '50250250', '1985-11-20', NULL, NULL); -- ID_PROFESSOR = 2
+CALL sp_cadastrar_usuario_completo('50350350', 'profBio', 'professor', 'Prof. Gabriel (Bio)', 'gabriel.b@escola.com', '50350350', '1990-09-01', NULL, NULL);    -- ID_PROFESSOR = 3
+
+-- Turma 1 (ID_TURMA = 1)
+CALL sp_cadastrar_usuario_completo('93344', 'a1a1a1a1', 'aluno', 'Lucas Silva', 'lucas.s@aluno.com', '93344', '2000-01-15', '2001', 1); -- ID_ALUNO = 1 (CHAVE)
+CALL sp_cadastrar_usuario_completo('94455', 'a2a2a2a2', 'aluno', 'Beatriz Souza', 'bia.s@aluno.com', '94455', '2001-05-20', '2002', 1); -- ID_ALUNO = 2
+CALL sp_cadastrar_usuario_completo('95566', 'a3a3a3a3', 'aluno', 'Carlos Lima', 'carlos.l@aluno.com', '95566', '1999-12-01', '2003', 1); -- ID_ALUNO = 3
+CALL sp_cadastrar_usuario_completo('96677', 'a4a4a4a4', 'aluno', 'Diana Rosa', 'diana.r@aluno.com', '96677', '2000-08-25', '2004', 1); -- ID_ALUNO = 4
+CALL sp_cadastrar_usuario_completo('97788', 'a5a5a5a5', 'aluno', 'Eduardo Neves', 'eduardo.n@aluno.com', '97788', '2001-03-11', '2005', 1); -- ID_ALUNO = 5
+
+-- Turma 2 (ID_TURMA = 2)
+CALL sp_cadastrar_usuario_completo('98899', 'a6a6a6a6', 'aluno', 'Fernanda Guedes', 'fef.g@aluno.com', '98899', '2002-07-07', '2006', 2); -- ID_ALUNO = 6
+CALL sp_cadastrar_usuario_completo('90011', 'a7a7a7a7', 'aluno', 'Gustavo Viana', 'guga.v@aluno.com', '90011', '2003-04-18', '2007', 2); -- ID_ALUNO = 7
+CALL sp_cadastrar_usuario_completo('92233', 'a8a8a8a8', 'aluno', 'Heloisa Farias', 'helo.f@aluno.com', '92233', '2002-10-30', '2008', 3); -- ID_ALUNO = 8
+
+-- Turma 3 (ID_TURMA = 3)
+CALL sp_cadastrar_usuario_completo('944551', 'a9a9a9a9', 'aluno', 'Igor Santos', 'igor.s@aluno.com', '944551', '2001-06-12', '2009', 3); -- ID_ALUNO = 9
+CALL sp_cadastrar_usuario_completo('966771', 'a10a10a1', 'aluno', 'Joana Rocha', 'joana.r@aluno.com', '966771', '2003-01-22', '2010', 3); -- ID_ALUNO = 10
+CALL sp_cadastrar_usuario_completo('24122460', 'a11a11a1', 'aluno', 'João Campos', 'joaosantos20071009@gmail.com', '(11) 9 9450-9385', '2007-09-11', '24122460', 3); -- ID_ALUNO = 11
+
+select * from tbl_usuarios;
+select * from tbl_aluno;
+select * from tbl_professor;
+select * from tbl_gestao;
+
+INSERT INTO tbl_turma_professor (id_professor, id_turma) VALUES 
+(1, 1), (1, 2), (1, 3), -- Prof Carlos em todas as turmas
+(2, 1), (2, 2),          -- Prof Claudia em Turmas 1 e 2
+(3, 3);                  -- Prof Gabriel na Turma 3
+
+select * from tbl_turma_professor;
+
+-- Gestão e Semestres em Turmas
+INSERT INTO tbl_gestao_turma (id_gestao, id_turma) VALUES (1, 1), (1, 2), (1, 3);
+INSERT INTO tbl_semestre_turma (id_turma, id_semestre) VALUES (1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2);
+
+select * from tbl_gestao_turma;
+select * from tbl_semestre_turma;
+
+-- Matemática (ID_MATERIA = 1, ID_PROFESSOR = 1)
+INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
+VALUES 
+('Prova Mat S1', 'Matemática Prova S1', '2024-04-15', 1, 1, 1),  -- ID_ATIVIDADE = 1
+('Teste Mat S2', 'Matemática Teste S2', '2024-10-15', 1, 1, 3);  -- ID_ATIVIDADE = 2
+
+-- Português (ID_MATERIA = 2, ID_PROFESSOR = 2)
+INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
+VALUES 
+('Trabalho Port S1', 'Português Trabalho S1', '2024-05-01', 2, 2, 2), -- ID_ATIVIDADE = 3
+('Prova Port S2', 'Português Prova S2', '2024-11-01', 2, 2, 1);   -- ID_ATIVIDADE = 4
+
+-- Biologia (ID_MATERIA = 4, ID_PROFESSOR = 3)
+INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
+VALUES 
+('Teste Bio S1', 'Biologia Teste S1', '2024-03-20', 4, 3, 3), -- ID_ATIVIDADE = 5
+('Trabalho Bio S2', 'Biologia Trabalho S2', '2024-09-30', 4, 3, 2), -- ID_ATIVIDADE = 6
+('Prova Bio S2', 'Biologia Trabalho S2', '2024-10-20', 4, 3, 1); -- ID_ATIVIDADE = 7
+
+select * from tbl_atividade;
+
+-- Aluno 11 (Turma 3) em todas atividades
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 11), (2, 11), (3, 11), (4, 11), (5, 11), (6, 11), (7, 11); -- ID_ATIVIDADE_ALUNO 1 AO 7
+
+select * from tbl_atividade_aluno;
+
+-- Média Aluno 11 em Mat
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (10.0, 1, 1);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (9.5, 2, 2);
+
+-- Média Aluno 11 em Port
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.0, 3, 1);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.5, 4, 2);
+
+-- Média Aluno 11 em Bio
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (9.0, 5, 1);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.5, 6, 2);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (8.5, 7, 2);
+
+select * from tbl_nota;
+
+-- Aluno 11 (João) em Matemática (4 aulas)
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia) VALUES 
+(true, '2024-03-01', 11, 1), (false, '2024-03-02', 11, 1), -- 50%
+(true, '2024-03-03', 11, 1), (true, '2024-03-04', 11, 1); -- (3/4 = 75%)
+
+-- Aluno 11 (João) em Português (4 aulas)
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia) VALUES 
+(true, '2024-03-01', 11, 2), (false, '2024-03-02', 11, 2), -- 50%
+(true, '2024-03-03', 11, 2), (true, '2024-03-04', 11, 2); -- (3/4 = 75%)
+
+-- Aluno 11 (João) em Português (4 aulas)
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia) VALUES 
+(true, '2024-03-01', 11, 4), (true, '2024-03-02', 11, 4), -- 100%
+(true, '2024-03-03', 11, 4), (true, '2024-03-04', 11, 4); -- (4/4 = 100%)
+
+select * from tbl_frequencia;
+
+-- --------------------------------------------------------------------
+-- ** CONSULTAS DE VALIDAÇÃO (Para rodar após a inserção) **
+-- --------------------------------------------------------------------
+
+-- TESTE A: VALIDAÇÃO DA MÉDIA DO ALUNO POR SEMESTRE (Alunos diferentes com notas diferentes)
+-- Aluno 11 (João) em Matemática (ID=1). Média S1: 10.0, Média S2: 9.5
+SELECT 
+    *
+FROM vw_desempenho_aluno 
+WHERE id_aluno = 11 AND id_materia = 1;
+
+-- TESTE B: VALIDAÇÃO DA MÉDIA DA ATIVIDADE POR TURMA (Docente)
+SELECT 
+    *
+FROM vw_desempenho_turma
+WHERE id_professor = 3 AND id_turma = 3;
+
+-- TESTE C: VALIDAÇÃO DA MÉDIA CONSOLIDADA POR MATÉRIA/TURMA (Gestão)
+SELECT 
+   *
+FROM vw_desempenho_turma_materia
+WHERE id_gestao = 1 AND id_turma = 3 AND id_materia = 4 AND id_semestre = 2;
+
+-- POPULANDO MAIS AINDA
+
+-- Aluno 9 (Igor Santos) em todas atividades
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 9), (2, 9), (3, 9), (4, 9), (5, 9), (6, 9), (7, 9); 
+-- ID_ATIVIDADE_ALUNO 8 AO 14
+
+-- Média Aluno 9 em Bio (ID_ATIVIDADE_ALUNO 12, 13, 14)
+-- S1: Teste Bio S1 (ID_ATIVIDADE = 5)
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (8.0, 12, 1); 
+
+-- S2: Trabalho Bio S2 (ID_ATIVIDADE = 6)
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (6.0, 13, 2); 
+-- S2: Prova Bio S2 (ID_ATIVIDADE = 7)
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.0, 14, 2); 
+
+-- Média Turma 3, Biologia, Semestre 2 (Turma: Aluno 9 + Aluno 11)
+-- Atividade 6 (Trabalho Bio S2): (7.5 + 6.0) / 2 = 6.75
+-- Atividade 7 (Prova Bio S2): (8.5 + 7.0) / 2 = 7.75
+
+-- Média FINAL ESPERADA: (6.75 + 7.75) / 2 = 14.50 / 2 = 7.25
+
+-- Aluno 9 (Igor) em Biologia (4 aulas)
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia) VALUES 
+(true, '2024-03-01', 9, 4), (true, '2024-03-02', 9, 4), 
+(false, '2024-03-03', 9, 4), (true, '2024-03-04', 9, 4); 
+-- (3/4 = 75%)
+
+--------------------------------------------------------------------------

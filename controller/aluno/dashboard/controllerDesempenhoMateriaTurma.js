@@ -33,12 +33,12 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                             materia: item.materia
                         },
                         frequencia: {
-                            frequencia_turma: item.frequencia_turma_materia,
-                            total_presenca: Number(item.total_presenca), 
-                            total_faltas: Number(item.total_falta),
+                            porcentagem_frequencia: item.frequencia_turma_materia,
+                            presencas: Number(item.total_presenca), 
+                            faltas: Number(item.total_falta),
                             total_aulas: Number(item.total_aulas)
                         },
-                        media_geral: 0, 
+                        media: 0, 
                         atividades: []
                     })
                 }

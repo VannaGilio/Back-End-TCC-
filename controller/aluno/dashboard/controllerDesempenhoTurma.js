@@ -32,6 +32,10 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                             faltas: Number(item.total_falta),
                             total_aulas: Number(item.total_aulas)
                         },
+                        materia: {
+                            materia_id: item.id_materia,
+                            materia: item.materia,
+                        },
                         media: Number(item.media_geral_professor),
                         atividades: []
                     })
@@ -40,6 +44,7 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                 materiaArray.atividades.push({
                     atividade: item.atividade,
                     categoria: item.categoria,
+                    descricao: item.descricao,
                     nota: Number(item.media_atividade)
                 })
             }

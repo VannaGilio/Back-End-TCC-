@@ -840,16 +840,29 @@ SELECT
     t.turma AS turma,
     a.id_atividade,
     a.titulo AS atividade,
+    a.descricao AS descricao_atividade, -- ✅ ADICIONADO
     c.categoria,
     ROUND(AVG(n.nota), 2) AS media_atividade,
-    n.id_semestre
+    n.id_semestre,
+    m.id_materia,         -- ✅ ADICIONADO
+    m.materia             -- ✅ ADICIONADO
 FROM tbl_turma t
 JOIN tbl_aluno al ON al.id_turma = t.id_turma
 JOIN tbl_atividade_aluno aa ON aa.id_aluno = al.id_aluno
 JOIN tbl_atividade a ON a.id_atividade = aa.id_atividade
 JOIN tbl_categoria c ON c.id_categoria = a.id_categoria
 JOIN tbl_nota n ON n.id_atividade_aluno = aa.id_atividade_aluno
-GROUP BY t.id_turma, t.turma, a.id_atividade, c.categoria, n.id_semestre;   
+JOIN tbl_materia m ON a.id_materia = m.id_materia -- ✅ ADICIONADO JOIN DA MATÉRIA
+GROUP BY 
+    t.id_turma, 
+    t.turma, 
+    a.id_atividade, 
+    a.titulo, 
+    a.descricao,   -- ✅ ADICIONADO AO GROUP BY
+    c.categoria, 
+    n.id_semestre,
+    m.id_materia, 
+    m.materia;     -- ✅ ADICIONADO AO GROUP BY
 
 -- VIEW FREQUENCIA MEDIA TURMA 
 
@@ -903,7 +916,10 @@ SELECT
     MA.id_turma,
     MA.turma,
     MA.id_semestre,
+    MA.id_materia,              -- ✅ ADICIONADO
+    MA.materia,                 -- ✅ ADICIONADO
     MA.atividade,
+    MA.descricao_atividade,     -- ✅ ADICIONADO
     MA.categoria,
     MA.media_atividade,
 

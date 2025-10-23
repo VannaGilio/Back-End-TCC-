@@ -733,6 +733,22 @@ INNER JOIN tbl_materia m
     ON a.id_materia = m.id_materia
 GROUP BY aa.id_aluno, m.id_materia, n.id_semestre;
 
+-- VIEW FREQUENCIA
+
+CREATE OR REPLACE VIEW vw_frequencia_por_aluno_materia AS
+SELECT
+    id_aluno,
+    id_materia,
+    COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
+    COUNT(CASE WHEN f.presenca = 0 THEN 1 END) AS total_falta,
+    COUNT(*) AS total_aulas,
+    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
+FROM
+    tbl_frequencia f
+GROUP BY
+    id_aluno,
+    id_materia;
+
 -- VIEW DESEMPENHO DO ALUNO
 DROP VIEW IF EXISTS vw_desempenho_aluno;
 CREATE VIEW vw_desempenho_aluno AS
@@ -814,22 +830,6 @@ VALUES
 (8.0, 5, 2),
 (9.0, 6, 2); 
 SELECT * FROM tbl_nota;
-
--- VIEW FREQUENCIA
-
-CREATE OR REPLACE VIEW vw_frequencia_por_aluno_materia AS
-SELECT
-    id_aluno,
-    id_materia,
-    COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
-    COUNT(CASE WHEN f.presenca = 0 THEN 1 END) AS total_falta,
-    COUNT(*) AS total_aulas,
-    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
-FROM
-    tbl_frequencia f
-GROUP BY
-    id_aluno,
-    id_materia;
 
 -- INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia)
 -- VALUES (false, '2025-10-22', 3, 1);

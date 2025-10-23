@@ -40,7 +40,8 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
                 materiaArray.atividades.push({
                     atividade: item.atividade,
                     categoria: item.categoria,
-                    nota: Number(item.nota)
+                    nota: Number(item.nota),
+                    descricao: item.descricao,
                 })
             }
 

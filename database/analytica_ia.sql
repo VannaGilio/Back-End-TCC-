@@ -826,15 +826,15 @@ SELECT
     MA.id_turma,
     MA.turma,
     MA.id_semestre,
-    MA.id_materia,              -- ✅ ADICIONADO
-    MA.materia,                 -- ✅ ADICIONADO
+    MA.id_materia,              
+    MA.materia,                 
     MA.atividade,
-    MA.descricao_atividade,     -- ✅ ADICIONADO
+    MA.descricao_atividade,     
     MA.categoria,
     MA.media_atividade,
 
-    -- Campos de frequência
-    FT.frequencia_turma,
+    -- Campos de frequência (AGORA CORRIGIDOS)
+    FT.frequencia_turma_materia, -- <-- MUDANÇA 1: Nome do campo
     FT.total_presenca,
     FT.total_falta,
     FT.total_aulas,
@@ -851,9 +851,10 @@ SELECT
 FROM 
     vw_media_atividades_turma MA
 LEFT JOIN 
-    vw_frequencia_media_turma FT
+    vw_frequencia_turma_materia FT -- <-- MUDANÇA 2: View correta
     ON FT.id_turma = MA.id_turma
    AND FT.id_semestre = MA.id_semestre
+   AND FT.id_materia = MA.id_materia  -- <-- MUDANÇA 3: Adicionado JOIN por matéria
 JOIN 
     tbl_atividade TPA
     ON TPA.id_atividade = MA.id_atividade 

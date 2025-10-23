@@ -28,7 +28,7 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                             turma: item.turma
                         },
                         frequencia: {
-                            porcentagem_frequencia: item.frequencia_turma,
+                            porcentagem_frequencia: item.frequencia_turma_materia,
                             presencas: Number(item.total_presenca), 
                             faltas: Number(item.total_falta),
                             total_aulas: Number(item.total_aulas)

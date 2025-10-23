@@ -16,6 +16,7 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
             let desempenhoMap = new Map()
 
             for (const item of result) {
+                console.log(item)
                 if(!desempenhoMap.has(item.id_turma)){
                     desempenhoMap.set(item.id_turma, {
                         professor: {
@@ -32,6 +33,10 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                             faltas: Number(item.total_falta),
                             total_aulas: Number(item.total_aulas)
                         },
+                        materia: {
+                            materia_id: item.id_materia,
+                            materia: item.materia,
+                        },
                         media: Number(item.media_geral_professor),
                         atividades: []
                     })
@@ -40,6 +45,7 @@ const buscarDesempenhoTurma = async function (idProfessor, idTurma, idSemestre) 
                 materiaArray.atividades.push({
                     atividade: item.atividade,
                     categoria: item.categoria,
+                    descricao: item.descricao_atividade,
                     nota: Number(item.media_atividade)
                 })
             }

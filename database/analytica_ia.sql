@@ -733,16 +733,33 @@ INNER JOIN tbl_materia m
     ON a.id_materia = m.id_materia
 GROUP BY aa.id_aluno, m.id_materia, n.id_semestre;
 
+-- VIEW FREQUENCIA
+
+CREATE OR REPLACE VIEW vw_frequencia_por_aluno_materia AS
+SELECT
+    id_aluno,
+    id_materia,
+    COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
+    COUNT(CASE WHEN f.presenca = 0 THEN 1 END) AS total_falta,
+    COUNT(*) AS total_aulas,
+    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
+FROM
+    tbl_frequencia f
+GROUP BY
+    id_aluno,
+    id_materia;
+
 -- VIEW DESEMPENHO DO ALUNO
 DROP VIEW IF EXISTS vw_desempenho_aluno;
 CREATE VIEW vw_desempenho_aluno AS
 SELECT 
     aa.id_aluno,
-	al.nome AS nome,
+    al.nome AS nome,
     m.id_materia,
     m.materia,
     a.id_atividade,
     a.titulo AS atividade,
+    a.descricao AS descricao_atividade,  -- ✅ ADICIONADO
     c.categoria,
     n.nota,
     n.id_semestre,
@@ -754,7 +771,8 @@ SELECT
 FROM tbl_nota n
 INNER JOIN tbl_atividade_aluno aa 
     ON n.id_atividade_aluno = aa.id_atividade_aluno
-INNER JOIN tbl_aluno al ON aa.id_aluno = al.id_aluno  
+INNER JOIN tbl_aluno al 
+    ON aa.id_aluno = al.id_aluno  
 INNER JOIN tbl_atividade a 
     ON aa.id_atividade = a.id_atividade
 INNER JOIN tbl_materia m 
@@ -762,9 +780,12 @@ INNER JOIN tbl_materia m
 INNER JOIN tbl_categoria c 
     ON a.id_categoria = c.id_categoria
 LEFT JOIN vw_media_aluno_materia_semestre vm 
-    ON vm.id_aluno = aa.id_aluno AND vm.id_materia = m.id_materia AND vm.id_semestre = n.id_semestre
+    ON vm.id_aluno = aa.id_aluno 
+   AND vm.id_materia = m.id_materia 
+   AND vm.id_semestre = n.id_semestre
 LEFT JOIN vw_frequencia_por_aluno_materia f
-    ON f.id_aluno = aa.id_aluno AND f.id_materia = m.id_materia;
+    ON f.id_aluno = aa.id_aluno 
+   AND f.id_materia = m.id_materia;
 
 
 SELECT * 
@@ -810,22 +831,6 @@ VALUES
 (9.0, 6, 2); 
 SELECT * FROM tbl_nota;
 
--- VIEW FREQUENCIA
-
-CREATE OR REPLACE VIEW vw_frequencia_por_aluno_materia AS
-SELECT
-    id_aluno,
-    id_materia,
-    COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
-    COUNT(CASE WHEN f.presenca = 0 THEN 1 END) AS total_falta,
-    COUNT(*) AS total_aulas,
-    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
-FROM
-    tbl_frequencia f
-GROUP BY
-    id_aluno,
-    id_materia;
-
 -- INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia)
 -- VALUES (false, '2025-10-22', 3, 1);
 
@@ -840,16 +845,29 @@ SELECT
     t.turma AS turma,
     a.id_atividade,
     a.titulo AS atividade,
+    a.descricao AS descricao_atividade, -- ✅ ADICIONADO
     c.categoria,
     ROUND(AVG(n.nota), 2) AS media_atividade,
-    n.id_semestre
+    n.id_semestre,
+    m.id_materia,         -- ✅ ADICIONADO
+    m.materia             -- ✅ ADICIONADO
 FROM tbl_turma t
 JOIN tbl_aluno al ON al.id_turma = t.id_turma
 JOIN tbl_atividade_aluno aa ON aa.id_aluno = al.id_aluno
 JOIN tbl_atividade a ON a.id_atividade = aa.id_atividade
 JOIN tbl_categoria c ON c.id_categoria = a.id_categoria
 JOIN tbl_nota n ON n.id_atividade_aluno = aa.id_atividade_aluno
-GROUP BY t.id_turma, t.turma, a.id_atividade, c.categoria, n.id_semestre;   
+JOIN tbl_materia m ON a.id_materia = m.id_materia -- ✅ ADICIONADO JOIN DA MATÉRIA
+GROUP BY 
+    t.id_turma, 
+    t.turma, 
+    a.id_atividade, 
+    a.titulo, 
+    a.descricao,   -- ✅ ADICIONADO AO GROUP BY
+    c.categoria, 
+    n.id_semestre,
+    m.id_materia, 
+    m.materia;     -- ✅ ADICIONADO AO GROUP BY
 
 -- VIEW FREQUENCIA MEDIA TURMA 
 
@@ -903,7 +921,10 @@ SELECT
     MA.id_turma,
     MA.turma,
     MA.id_semestre,
+    MA.id_materia,              -- ✅ ADICIONADO
+    MA.materia,                 -- ✅ ADICIONADO
     MA.atividade,
+    MA.descricao_atividade,     -- ✅ ADICIONADO
     MA.categoria,
     MA.media_atividade,
 

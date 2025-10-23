@@ -38,7 +38,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                             faltas: Number(item.total_falta),
                             total_aulas: Number(item.total_aulas)
                         },
-                        media: 0, 
+                        media: Number(item.media_turma_materia) || 0, 
                         atividades: []
                     })
                 }
@@ -54,18 +54,7 @@ const buscarDesempenhoTurmaMateria = async function (idGestao, idTurma, idMateri
                 })
             }
 
-            const desempenhoArray = Array.from(desempenhoMap.values()).map(turmaMateria => {
-                const medias = turmaMateria.atividades.map(a => a.media_turma);
-                
-                if (medias.length > 0) {
-                    const soma = medias.reduce((acc, curr) => acc + curr, 0);
-                    const mediaCalculada = parseFloat((soma / medias.length).toFixed(2));
-                    
-                    turmaMateria.media = mediaCalculada;
-                }
-                
-                return turmaMateria;
-            });
+            const desempenhoArray = Array.from(desempenhoMap.values())
 
             if(result && result.length > 0){
                 dados.status = true

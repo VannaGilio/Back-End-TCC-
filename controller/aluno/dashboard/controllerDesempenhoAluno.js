@@ -41,7 +41,7 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
                     atividade: item.atividade,
                     categoria: item.categoria,
                     nota: Number(item.nota),
-                    descricao: item.descricao,
+                    descricao: item.descricao_atividade,
                 })
             }
 

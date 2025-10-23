@@ -348,15 +348,6 @@ CREATE PROCEDURE sp_inserir_turma(
 	);
 END$
 
-CALL sp_inserir_turma("1º ano B");
-select * from tbl_turma;
-
-CREATE PROCEDURE sp_inserir_professor (
-    IN 
-)
-
-
-use db_analytica_ai;
 -- INSERIR ALUNO
 
 DELIMITER $ 
@@ -419,7 +410,7 @@ END$
 -- INSERIR PROFESSOR
 
 DELIMITER $
-DROP PROCEDURE sp_inserir_professor;
+DROP PROCEDURE IF EXISTS sp_inserir_professor;
 CREATE PROCEDURE sp_inserir_professor (
 	IN p_credencial VARCHAR(11),
     IN p_nome VARCHAR(80),
@@ -462,6 +453,7 @@ END $
 
 -- PROCEDURE - SALVANDO TOKEN DE RECUPERAÇÃO
 DELIMITER $$
+DROP PROCEDURE IF EXISTS sp_gerar_token_recuperacao;
 CREATE PROCEDURE sp_gerar_token_recuperacao(
 IN p_id_usuario INT,
 IN p_token VARCHAR(255),
@@ -479,17 +471,15 @@ SELECT p_id_usuario AS id_usuario_afetado;
 END$$
 DELIMITER ;
 
-call sp_gerar_token_recuperacao (1, "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", NOW() + INTERVAL 1 HOUR)
-
 -- PROCEDURE - VALIDAR TOKEN E RESETAR SENHA
 DELIMITER $$
+DROP PROCEDURE IF EXISTS sp_resetar_senha;
 CREATE PROCEDURE sp_resetar_senha(
 IN p_token VARCHAR(255),
 IN p_nova_senha VARCHAR(20)
 )
 BEGIN
 DECLARE v_id_usuario INT;
-
 SELECT id_usuario INTO v_id_usuario
 FROM tbl_usuarios
 WHERE token_recuperacao = p_token
@@ -514,16 +504,6 @@ SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
 END IF;
 END$$
 DELIMITER ;
-
-call sp_resetar_senha ("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", "novaSenhaGerada");
-
-
-------------------------------------------------------------
-
--- CADASTRO DE TURMA
-insert into tbl_turma(turma)values("1º ANO B")
-
-------------------------------------------------------------
 
 -- CADASTRO DE USUÁRIO
 DELIMITER $
@@ -573,26 +553,7 @@ SET v_id_usuario = LAST_INSERT_ID();
         SELECT v_id_usuario AS id_usuario_cadastrado, p_nivel_usuario AS nivel_cadastrado;
 END$
 
--- -- CADASTRO ALUNO
--- CALL sp_cadastrar_usuario_completo('24122460', 'oioioi', 'aluno', 'João Victor Campos dos Santos', 'joaosantos20071009@gmail.com', '994509385',
--- '2007-09-11', '24122460', 1);
-
--- -- CADASTRO PROFESSOR
--- CALL sp_cadastrar_usuario_completo('54321...', 'senha', 'professor', 'Nome', 'email', 'tel',
--- '1980-01-01', NULL, NULL);
-
--- -- CADASTRO GESTÃO
--- CALL sp_cadastrar_usuario_completo('98765...', 'senha', 'gestão', 'Nome', 'email', 'tel',
--- NULL, NULL, NULL);
-
--- VERIFICAR USUÁRIO CRIADO
--- select * from tbl_usuarios;
-
--- select * from tbl_aluno;
--- select * from tbl_professor;
--- select * from tbl_gestao;
-
-------------------------------------------------------------
+-- ----------------------------------------------------------
 
 -- LOGIN USUÁRIO
 DELIMITER $$
@@ -665,10 +626,7 @@ BEGIN
     END IF;
 END $$
 
--- TESTANDO LOGIN
--- CALL sp_login_usuario('24122460', 'senha');
-
-----------------------------------------------------------------
+-- --------------------------------------------------------------
 
 -- VIEW USUARIO 
 DROP VIEW IF EXISTS vw_listar_usuarios;
@@ -713,7 +671,7 @@ SELECT
     turma
 FROM tbl_turma;
 
----------------------------------
+-- -------------------------------
 
 -- VIEW MEDIA MATERIA - ALUNO 
 
@@ -787,54 +745,7 @@ LEFT JOIN vw_frequencia_por_aluno_materia f
     ON f.id_aluno = aa.id_aluno 
    AND f.id_materia = m.id_materia;
 
-
-SELECT * 
-FROM vw_desempenho_aluno 
-WHERE id_aluno = 9 AND id_materia = 2 AND id_semestre = 2;
-
-SELECT * FROM vw_desempenho_aluno;
-
-INSERT INTO tbl_professor (
-	nome, 
-    data_nascimento,
-    telefone,
-    email,
-    id_usuario
-) VALUES (
-	'Professor Genérico',
-    '2000-09-09',
-    '(11) 0 0000-0000',
-    'generico@escola.com',
-    2
-);
-select * from tbl_professor;
-
-INSERT INTO tbl_atividade (titulo, descricao, data_criacao, id_materia, id_professor, id_categoria)
-VALUES
-('Prova 1', 'Primeira prova do semestre', '2025-10-01', 2, 1, 1),
-('Trabalho 1', 'Trabalho em grupo', '2025-10-05', 1, 1, 2),
-('Seminario', 'Seminario', '2025-10-10', 3, 2, 3),
-('Atividade Extra', 'Atividade complementar', '2025-10-10', 2, 1, 2);
-
-INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno)
-VALUES
-(1, 9),
-(2, 9),
-(3, 9);
-SELECT * FROM tbl_atividade;
-SELECT * FROM tbl_atividade_aluno;
-
-INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre)
-VALUES
-(7.5, 4, 2), 
-(8.0, 5, 2),
-(9.0, 6, 2); 
-SELECT * FROM tbl_nota;
-
--- INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia)
--- VALUES (false, '2025-10-22', 3, 1);
-
---------------------------------------------------------------
+-- ------------------------------------------------------------
 
 -- VIEW MEDIA ATIVIDADES TURMA - DOCENTE
 
@@ -905,12 +816,6 @@ JOIN (
 
 GROUP BY t.id_turma, t.turma, st.id_semestre;
 
--- INSERT INTO tbl_semestre_turma (id_turma, id_semestre)
--- VALUES (2, 1);
-
--- INSERT INTO tbl_turma_professor (id_turma, id_professor) 
--- VALUES (1, 5);
-
 -- VIEW DESEMPENHO TURMA (CORRIGIDA)
 DROP VIEW IF EXISTS vw_desempenho_turma;
 CREATE VIEW vw_desempenho_turma AS
@@ -956,11 +861,9 @@ JOIN
     tbl_professor P
     ON P.id_professor = TPA.id_professor;
 
-----------------------------
+-- --------------------------
 
 -- VIEW MEDIA TURMA MATERIA SEMESTRE - GESTÃO
-
-USE db_analytica_ai;
 
   DROP VIEW IF EXISTS vw_media_atividade_materia;
 CREATE VIEW vw_media_atividade_materia AS
@@ -1094,7 +997,7 @@ LEFT JOIN
        AND mt.id_materia = ma.id_materia
        AND mt.id_semestre = ma.id_semestre;
 
-----------------------------
+-- --------------------------
 
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 
@@ -1111,20 +1014,10 @@ SELECT
 FROM tbl_aluno a JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
 JOIN tbl_turma t ON a.id_turma = t.id_turma; 
 
-SHOW PROCEDURE STATUS WHERE Db = 'db_analytica_ai';
-
-SHOW FULL TABLES IN db_analytica_ai WHERE TABLE_TYPE = 'VIEW';
-
 -- ALTERAÇÃO TABELA DE USUÁRIOS
 ALTER TABLE tbl_usuarios
 ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
 ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
-
--- ATUALIZANDO DADOS DE USUÁRIOS DEPOIS DAS MUDANÇAS
-UPDATE tbl_usuarios SET
-expiracao_token = NOW() + INTERVAL 1 HOUR,
-token_recuperacao = 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
-WHERE id_usuario = 1;
 
 -- VIEW - BUSCA DE USUÁRIO PELA CREDENCIAL
 CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
@@ -1147,9 +1040,7 @@ tbl_gestao g ON u.id_usuario = g.id_usuario
 WHERE
 COALESCE(a.email, p.email, g.email) IS NOT NULL;
 
-select * from vw_buscar_usuario_by_credencial where credencial = "24122460";
-
---------------------------------------------------------------------------
+-- ------------------------------------------------------------------------
 
 -- POPULANDO AS TABELAS COM DADOS
 
@@ -1365,4 +1256,4 @@ INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia) VAL
 (false, '2024-03-03', 9, 4), (true, '2024-03-04', 9, 4); 
 -- (3/4 = 75%)
 
---------------------------------------------------------------------------
+-- ------------------------------------------------------------------------

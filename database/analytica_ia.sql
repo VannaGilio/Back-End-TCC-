@@ -1073,25 +1073,6 @@ LEFT JOIN
        AND mt.id_materia = ma.id_materia
        AND mt.id_semestre = ma.id_semestre;
 
--- INSERT INTO tbl_gestao (
--- 	nome,
---     telefone,
---     email,
---     id_usuario
--- )VALUES(
--- 	"Jheniffer Rodrigues",
---     "(11) 9 1823-7602",
---     "gestao@gmail.com",
---     8
--- );
-
--- insert into tbl_gestao_turma(
---     id_gestao,
---     id_turma
--- )value
--- 	(2, 2),
---     (2, 1);
-
 ----------------------------
 
 -- VIEW ALUNO

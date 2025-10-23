@@ -131,9 +131,49 @@ const excluirAlunoPorId = async function (id) {
   }
 }
 
+const atualizarAlunoPorId = async function (id, aluno, contentType) {
+    try {
+        if(contentType == 'application/json'){
+            if( !id || 
+                !aluno.nome || aluno.nome.length > 80 ||
+                !aluno.telefone || aluno.telefone.length > 14 ||
+                !aluno.email || aluno.email.length > 45 
+              ){
+                    
+                return message.ERROR_REQUIRED_FIELDS
+            }else{
+                let select = await alunoDAO.selectByIdAluno(parseInt(id))
+
+                if (select != false || typeof (select) == 'object') {
+                    if (select.length > 0) {
+                        aluno.id_aluno = parseInt(id)
+                    
+                        let result = await alunoDAO.updateByIdAluno(aluno)
+
+                        if(result){
+                            return message.SUCCESS_UPDATED_ITEM
+                        }else{
+                            return message.ERROR_INTERNAL_SERVER_MODEL
+                        }
+                    }else{
+                        return message.ERROR_NOT_FOUND
+                    }
+                }else{
+                    return message.ERROR_INTERNAL_SERVER_MODEL
+                }
+            } 
+        }else{
+            return message.ERROR_CONTENT_TYPE
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER
+    }
+}
+
 module.exports = {
   inserirAluno,
   listarAlunos,
   buscarAlunoPorId,
-  excluirAlunoPorId
+  excluirAlunoPorId,
+  atualizarAlunoPorId
 }

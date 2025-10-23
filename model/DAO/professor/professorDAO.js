@@ -1,15 +1,16 @@
 const { PrismaClient } = require('@prisma/client');
+const e = require('express');
 const prisma = new PrismaClient()
 
-const insertProfessor = async function(aluno){
+const insertProfessor = async function(professor){
     try {
         let result = await prisma.$executeRaw`
             CALL sp_inserir_professor(
-            ${aluno.credencial}, 
-            ${aluno.nome}, 
-            ${aluno.email}, 
-            ${aluno.telefone}, 
-            ${aluno.data_nascimento}
+            ${professor.credencial}, 
+            ${professor.nome}, 
+            ${professor.email}, 
+            ${professor.telefone}, 
+            ${professor.data_nascimento}
            );
         `
         if(result)
@@ -22,6 +23,38 @@ const insertProfessor = async function(aluno){
     }
 }
 
+const selectByIdProfessor = async function(id){
+    try {
+        let result = await prisma.$queryRaw`
+            select * from vw_buscar_professor WHERE id_professor = ${id}
+        `
+        return result
+    } catch (error) {
+        return false
+    }
+}
+
+const updateByIdProfessor = async function(professor){
+    try {
+        let sql = `update tbl_professor set nome = '${professor.nome}',
+                                         email = '${professor.email}',
+                                         telefone = '${professor.telefone}'
+                                                                            
+                                    where id_professor = ${professor.id_professor};`
+
+        let result = await prisma.$executeRawUnsafe(sql)
+
+        if(result)
+            return true
+        else
+            return false
+    } catch (error) {
+        return false
+    }
+}
+
 module.exports = {
-    insertProfessor
+    insertProfessor,
+    selectByIdProfessor,
+    updateByIdProfessor
 }

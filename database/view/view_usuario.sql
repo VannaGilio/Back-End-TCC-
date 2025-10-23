@@ -55,19 +55,35 @@ SELECT
     a.telefone, 
     a.email, 
     a.data_nascimento 
-FROM tbl_aluno a JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
+FROM tbl_aluno a 
+JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
 JOIN tbl_turma t ON a.id_turma = t.id_turma; 
 
-CREATE VIEW buscarCategoria AS 
+-- VIEW GESTÃO
+DROP VIEW IF EXISTS vw_buscar_gestao;
+CREATE VIEW  vw_buscar_gestao AS
 SELECT
-    id_categoria,
-    categoria
-FROM tbl_categoria;
+    g.id_gestao,
+    u.id_usuario,
+    g.nome,
+    g.email,
+    g.telefone
+FROM tbl_gestao g
+JOIN tbl_usuarios u ON g.id_usuario = u.id_usuario
 
-
+-- VIEW PROFESSOR
+DROP VIEW IF EXISTS vw_buscar_professor;
+CREATE VIEW  vw_buscar_professor AS
+SELECT
+    p.id_professor,
+    u.id_usuario,
+    p.nome,
+    p.email,
+    p.telefone
+FROM tbl_professor p
+JOIN tbl_usuarios u ON p.id_usuario = u.id_usuario
 
 ---------------------------------------------------------------
-
 
 CREATE VIEW buscarGestao AS
 SELECT

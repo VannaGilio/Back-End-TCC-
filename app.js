@@ -370,6 +370,18 @@ app.delete('/v1/analytica-ai/aluno/:id', async function (request, response){
     response.json(result)
 })
 
+app.put('/v1/analytica-ai/aluno/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerAluno.atualizarAlunoPorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
 
 /*********PROFESSOR*********/
 
@@ -384,6 +396,37 @@ app.post('/v1/analytica-ai/professor', async function (request, response){
     response.status(result.status_code)
     response.json(result)
 })
+
+app.put('/v1/analytica-ai/professor/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerProfessor.atualizarProfessorPorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+/*********GESTÃO*********/
+
+const controllerGestao= require('./controller/gestao/controllerGestao.js')
+
+app.put('/v1/analytica-ai/gestao/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerGestao.atualizarGestaoPorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 
 /*********DESEMPENHO ALUNO*********/
 

@@ -1,6 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
-const message = require('../../../modulo/config.js')
 
 const insertAluno = async function(aluno){
     try {
@@ -60,9 +59,30 @@ const deleteByIdAluno = async function (id) {
     }
 }
 
+const updateByIdAluno = async function(aluno){
+    try {
+        let sql = `update tbl_aluno set nome = '${aluno.nome}',
+                                        email = '${aluno.email}',
+                                        telefone = '${aluno.telefone}'
+
+                                    where id_aluno = ${aluno.id_aluno};`
+
+        let result = await prisma.$executeRawUnsafe(sql)
+
+        if(result)
+            return true
+        else
+            return false
+    } catch (error) {
+        console.error(error)
+        return false
+    }
+}
+
 module.exports = {
     insertAluno,
     selectAllAlunos,
     selectByIdAluno,
-    deleteByIdAluno
+    deleteByIdAluno,
+    updateByIdAluno
 }

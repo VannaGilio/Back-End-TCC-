@@ -17,7 +17,7 @@ const buscarRankingAluno = async function (idAluno, idMateria, idSemestre) {
                 return {
                     Ranking: Number(item.Ranking), // <--- CONVERSÃO OBRIGATÓRIA
                     Média: Number(item['Média']), // Garante que a Média é um Number (opcional, mas bom)
-                    'Nome do Aluno': item['Nome do Aluno']
+                    nome: item['Nome do Aluno']
                 };
             });
 

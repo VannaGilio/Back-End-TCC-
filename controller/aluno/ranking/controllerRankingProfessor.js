@@ -21,7 +21,7 @@ const buscarRankingProfessor = async function (idProfessor, idTurma, idSemestre)
                 return {
                     Ranking: Number(item.Ranking), // <--- Aplica Number() para evitar TypeError
                     Média: Number(item['Média']), // Boa prática para garantir que a Média é um Number
-                    'Nome do Aluno': item['Nome do Aluno']
+                    nome: item['Nome do Aluno']
                 };
             });
             

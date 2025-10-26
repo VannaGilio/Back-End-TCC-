@@ -22,7 +22,7 @@ const buscarRankingGestao = async function (idGestao, idTurma, idMateria, idSeme
                 return {
                     Ranking: Number(item.Ranking), // <--- Aplica Number()
                     Média: Number(item['Média']),
-                    'Nome do Aluno': item['Nome do Aluno'],
+                    nome: item['Nome do Aluno'],
                     Matéria: item.Matéria // Mantém o nome da Matéria
                 };
             });

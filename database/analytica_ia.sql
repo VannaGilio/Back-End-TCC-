@@ -1351,8 +1351,205 @@ SELECT * FROM vw_desempenho_aluno;
 -- Desempenho geral (gestão)
 SELECT * FROM vw_desempenho_turma;
 
--- INSERT PARA FICAR MUDANDO A PRESENÇA
+-- INSERT PARA FICAR BRINCANDO COM OS VALORES DA PRESENÇA
 INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia, id_semestre)
 VALUES
 -- Alunos da turma 1 (variações de presença)
 (1, '2024-08-03', 11, 1, 2)
+
+-- ---------------------------------------------------------------------
+
+-- =================================================================
+-- 1. VIEWS DE BASE (Para todos os níveis de acesso)
+-- =================================================================
+
+-- 1.1. vw_ranking_base
+-- Consolida a média final do aluno por matéria e semestre, e calcula o ranking
+DROP VIEW IF EXISTS vw_ranking_base;
+
+CREATE VIEW vw_ranking_base AS
+SELECT
+    A.id_aluno,
+    A.nome AS nome_aluno,
+    A.id_turma,
+    T.turma,
+    M.id_materia,
+    M.materia,
+    VS.id_semestre,
+    VS.semestre,
+    -- Calcula a média geral das atividades do aluno na matéria/semestre
+    CAST(ROUND(AVG(N.nota), 2) AS DECIMAL(10, 2)) AS media_consolidada,
+    -- Calcula a posição no ranking (a posição 1 é a maior nota)
+    DENSE_RANK() OVER (
+        PARTITION BY VS.id_semestre, M.id_materia, A.id_turma 
+        ORDER BY AVG(N.nota) DESC
+    ) AS posicao_ranking
+FROM
+    tbl_aluno A
+JOIN 
+    tbl_turma T ON A.id_turma = T.id_turma
+JOIN 
+    tbl_atividade_aluno AA ON A.id_aluno = AA.id_aluno
+JOIN 
+    tbl_atividade AT ON AA.id_atividade = AT.id_atividade
+JOIN 
+    tbl_materia M ON AT.id_materia = M.id_materia
+JOIN 
+    tbl_nota N ON AA.id_atividade_aluno = N.id_atividade_aluno
+JOIN 
+    tbl_semestre VS ON N.id_semestre = VS.id_semestre
+GROUP BY
+    A.id_aluno, A.nome, A.id_turma, T.turma, M.id_materia, VS.id_semestre
+ORDER BY
+    VS.id_semestre, M.id_materia, A.id_turma, media_consolidada DESC;
+
+
+-- 1.2. vw_ranking_professor
+-- Adiciona o ID do professor para filtros de segurança
+DROP VIEW IF EXISTS vw_ranking_professor;
+
+CREATE VIEW vw_ranking_professor AS
+SELECT
+    A.id_professor,
+    RB.id_aluno,
+    RB.nome_aluno,
+    RB.id_turma,
+    RB.turma,
+    RB.id_materia,
+    RB.materia,
+    RB.id_semestre,
+    RB.media_consolidada,
+    RB.posicao_ranking
+FROM
+    vw_ranking_base RB
+JOIN
+    -- Encontra o ID do professor que criou a atividade naquela matéria
+    (SELECT DISTINCT id_materia, id_professor FROM tbl_atividade) A 
+    ON RB.id_materia = A.id_materia
+JOIN
+    -- Garante que o professor leciona na turma em questão (filtro de acesso)
+    tbl_turma_professor TP 
+    ON RB.id_turma = TP.id_turma AND A.id_professor = TP.id_professor;
+
+
+-- 1.3. vw_ranking_gestao
+-- Adiciona o ID da gestão para filtros de segurança
+DROP VIEW IF EXISTS vw_ranking_gestao;
+
+CREATE VIEW vw_ranking_gestao AS
+SELECT
+    GT.id_gestao,
+    RB.*
+FROM
+    vw_ranking_base RB
+JOIN
+    tbl_gestao_turma GT ON RB.id_turma = GT.id_turma;
+
+
+-- =================================================================
+-- 2. FUNÇÃO DE CENSURA (Exclusiva para a visão do Aluno)
+-- =================================================================
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS fn_censurar_nome_aluno;
+
+CREATE FUNCTION fn_censurar_nome_aluno (
+    nome_completo VARCHAR(255),
+    id_aluno_ranking INT,
+    id_aluno_logado INT
+)
+RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+    DECLARE nome_censurado VARCHAR(255);
+
+    -- Se for o aluno logado, retorna o nome completo.
+    IF id_aluno_ranking = id_aluno_logado THEN
+        RETURN nome_completo;
+    ELSE
+        -- Censura: Primeiro Nome + Inicial do Último Nome.
+        -- Ex: 'Lucas Silva' -> 'Lucas S.'
+        SET nome_censurado = CONCAT(
+            SUBSTRING_INDEX(nome_completo, ' ', 1),
+            ' ',
+            LEFT(SUBSTRING_INDEX(nome_completo, ' ', -1), 1),
+            '.'
+        );
+        RETURN nome_censurado;
+    END IF;
+END $$
+
+DELIMITER ;
+
+select * from tbl_aluno;
+
+CALL sp_get_ranking_aluno(11, 4, 1);
+
+CALL sp_get_ranking_professor(3, 3, 4, 1);
+
+CALL sp_get_ranking_gestao(1, 3, 4, 2);
+
+-- =================================================================
+-- INSERÇÃO DE DADOS ADICIONAIS PARA TESTE DE RANKING
+-- =================================================================
+
+-- ***************************************************************
+-- ALUNOS DA TURMA 1 (Lucas, Beatriz, Carlos, Diana) - Semestre 1
+-- ***************************************************************
+
+-- 1. Lucas Silva (ID=1) - Notas Turma 1
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 1), (3, 1);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES 
+(8.0, LAST_INSERT_ID() - 1, 1), -- Prova Mat S1 (ID=1): 8.0
+(9.5, LAST_INSERT_ID(), 1);
+-- Trabalho Port S1 (ID=3): 9.5
+-- Média S1: Mat: 8.0 / Port: 9.5
+
+-- 2. Beatriz Souza (ID=2) - Notas Turma 1
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 2), (3, 2);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES 
+(9.0, LAST_INSERT_ID() - 1, 1), -- Prova Mat S1 (ID=1): 9.0
+(7.0, LAST_INSERT_ID(), 1);
+-- Trabalho Port S1 (ID=3): 7.0
+-- Média S1: Mat: 9.0 / Port: 7.0
+
+-- 3. Carlos Lima (ID=3) - Notas Turma 1
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 3), (3, 3);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES 
+(8.0, LAST_INSERT_ID() - 1, 1), -- Prova Mat S1 (ID=1): 8.0
+(8.5, LAST_INSERT_ID(), 1);
+-- Trabalho Port S1 (ID=3): 8.5
+-- Média S1: Mat: 8.0 / Port: 8.5
+
+-- 4. Diana Rosa (ID=4) - Notas Turma 1
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 4), (3, 4);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES 
+(9.0, LAST_INSERT_ID() - 1, 1), -- Prova Mat S1 (ID=1): 9.0
+(7.5, LAST_INSERT_ID(), 1);
+-- Trabalho Port S1 (ID=3): 7.5
+-- Média S1: Mat: 9.0 / Port: 7.5
+
+-- ***************************************************************
+-- ALUNOS DA TURMA 3 (Igor, Joana, João) - Semestre 1 (Biologia)
+-- ***************************************************************
+-- João (ID=11) já tem nota 9.0 no Teste Bio S1 (ID=5)
+
+-- 5. Igor Santos (ID=9) já tem nota 8.0 no Teste Bio S1 (ID=5)
+
+-- 6. Joana Rocha (ID=10) - Notas Turma 3
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (5, 10);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES 
+(9.5, LAST_INSERT_ID(), 1);
+-- Teste Bio S1 (ID=5): 9.5
+-- Média S1: Bio: 9.5
+
+-- ***************************************************************
+-- RESUMO DO RANKING ESPERADO (Turma 3, Biologia, S1)
+-- ***************************************************************
+-- 1º Joana Rocha: 9.5
+-- 2º João Campos: 9.0
+-- 3º Igor Santos: 8.0
+
+-- -----------------------------------------------------------------------
+

@@ -474,6 +474,52 @@ app.get('/v1/analytica-ai/desempenho/gestao/turma-materia/:idGestao', async func
     response.json(result)
 })
 
+/********* RANKING ALUNO *********/
+const controllerRankingAluno = require('./controller/aluno/ranking/controllerRankingAluno.js');
+
+// Rota: /v1/analytica-ai/ranking/aluno/11?materia=4&semestre=1
+app.get('/v1/analytica-ai/ranking/aluno/:idAluno', async function (request, response) {
+    let idAluno = parseInt(request.params.idAluno);
+    let idMateria = request.query.materia ? parseInt(request.query.materia) : null;
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre) : null;
+
+    let result = await controllerRankingAluno.buscarRankingAluno(idAluno, idMateria, idSemestre);
+
+    response.status(result.status_code);
+    response.json(result);
+});
+
+/********* RANKING PROFESSOR *********/
+const controllerRankingProfessor = require('./controller/aluno/ranking/controllerRankingProfessor.js');
+
+// Rota: /v1/analytica-ai/ranking/professor/1?turma=3&semestre=2
+app.get('/v1/analytica-ai/ranking/professor/:idProfessor', async function (request, response) {
+    let idProfessor = parseInt(request.params.idProfessor);
+    let idTurma = request.query.turma ? parseInt(request.query.turma) : null;
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre) : null;
+
+    let result = await controllerRankingProfessor.buscarRankingProfessor(idProfessor, idTurma, idSemestre);
+
+    response.status(result.status_code);
+    response.json(result);
+});
+
+/********* RANKING GESTÃO *********/
+const controllerRankingGestao = require('./controller/aluno/ranking/controllerRankingGestao.js');
+
+// Rota: /v1/analytica-ai/ranking/gestao/1?turma=3&materia=4&semestre=2
+app.get('/v1/analytica-ai/ranking/gestao/:idGestao', async function (request, response) {
+    let idGestao = parseInt(request.params.idGestao);
+    let idTurma = request.query.turma ? parseInt(request.query.turma) : null;
+    let idMateria = request.query.materia ? parseInt(request.query.materia) : null;
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre) : null;
+
+    let result = await controllerRankingGestao.buscarRankingGestao(idGestao, idTurma, idMateria, idSemestre);
+
+    response.status(result.status_code);
+    response.json(result);
+});
+
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

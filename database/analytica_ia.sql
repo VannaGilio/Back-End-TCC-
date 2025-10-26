@@ -195,6 +195,7 @@ CREATE TABLE tbl_frequencia (
     data_frequencia DATE,
     id_aluno INT NOT NULL,
     id_materia INT NOT NULL,
+    id_semestre INT NOT NULL
     CONSTRAINT fk_frequencia_aluno
         FOREIGN KEY (id_aluno)
         REFERENCES tbl_aluno (id_aluno)
@@ -203,6 +204,10 @@ CREATE TABLE tbl_frequencia (
         FOREIGN KEY (id_materia)
         REFERENCES tbl_materia (id_materia)
         ON DELETE CASCADE
+    CONSTRAINT fk_frequencia_semestre
+    FOREIGN KEY (id_semestre)
+    REFERENCES tbl_semestre (id_semestre)
+    ON DELETE SET NULL;
 );
 
 CREATE TABLE tbl_nota (
@@ -693,35 +698,51 @@ GROUP BY aa.id_aluno, m.id_materia, n.id_semestre;
 
 -- VIEW FREQUENCIA
 
-CREATE OR REPLACE VIEW vw_frequencia_por_aluno_materia AS
+DROP VIEW IF EXISTS vw_frequencia_por_aluno_materia;
+CREATE VIEW vw_frequencia_por_aluno_materia AS
 SELECT
-    id_aluno,
-    id_materia,
+    f.id_aluno,
+    f.id_materia,
+    f.id_semestre,
     COUNT(CASE WHEN f.presenca = 1 THEN 1 END) AS total_presenca,
     COUNT(CASE WHEN f.presenca = 0 THEN 1 END) AS total_falta,
     COUNT(*) AS total_aulas,
-    CONCAT(ROUND(COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100, 2), '%') AS porcentagem_frequencia
+    CONCAT(ROUND(
+        IF(COUNT(*) = 0, 0,
+           COUNT(CASE WHEN f.presenca = 1 THEN 1 END) / COUNT(*) * 100
+        ), 2), '%') AS porcentagem_frequencia
 FROM
     tbl_frequencia f
 GROUP BY
-    id_aluno,
-    id_materia;
+    f.id_aluno,
+    f.id_materia,
+    f.id_semestre;
 
 -- VIEW DESEMPENHO DO ALUNO
 DROP VIEW IF EXISTS vw_desempenho_aluno;
 CREATE VIEW vw_desempenho_aluno AS
 SELECT 
-    aa.id_aluno,
-    al.nome AS nome,
+    al.id_aluno,
+    al.nome AS nome_aluno,
     m.id_materia,
     m.materia,
     a.id_atividade,
     a.titulo AS atividade,
-    a.descricao AS descricao_atividade,  -- ✅ ADICIONADO
+    a.descricao AS descricao_atividade,
     c.categoria,
     n.nota,
     n.id_semestre,
-    vm.media AS media_materia,
+    (
+        SELECT AVG(n2.nota)
+        FROM tbl_nota n2
+        INNER JOIN tbl_atividade_aluno aa2 
+            ON n2.id_atividade_aluno = aa2.id_atividade_aluno
+        INNER JOIN tbl_atividade a2 
+            ON aa2.id_atividade = a2.id_atividade
+        WHERE aa2.id_aluno = al.id_aluno
+          AND a2.id_materia = m.id_materia
+          AND n2.id_semestre = n.id_semestre
+    ) AS media_materia,
     f.total_presenca,
     f.total_falta,
     f.total_aulas,
@@ -730,20 +751,17 @@ FROM tbl_nota n
 INNER JOIN tbl_atividade_aluno aa 
     ON n.id_atividade_aluno = aa.id_atividade_aluno
 INNER JOIN tbl_aluno al 
-    ON aa.id_aluno = al.id_aluno  
+    ON aa.id_aluno = al.id_aluno
 INNER JOIN tbl_atividade a 
     ON aa.id_atividade = a.id_atividade
 INNER JOIN tbl_materia m 
     ON a.id_materia = m.id_materia
 INNER JOIN tbl_categoria c 
     ON a.id_categoria = c.id_categoria
-LEFT JOIN vw_media_aluno_materia_semestre vm 
-    ON vm.id_aluno = aa.id_aluno 
-   AND vm.id_materia = m.id_materia 
-   AND vm.id_semestre = n.id_semestre
 LEFT JOIN vw_frequencia_por_aluno_materia f
-    ON f.id_aluno = aa.id_aluno 
-   AND f.id_materia = m.id_materia;
+    ON f.id_aluno = al.id_aluno
+   AND f.id_materia = m.id_materia
+   AND f.id_semestre = n.id_semestre;
 
 -- ------------------------------------------------------------
 
@@ -783,38 +801,25 @@ GROUP BY
 -- VIEW FREQUENCIA MEDIA TURMA 
 
 DROP VIEW IF EXISTS vw_frequencia_media_turma;
-CREATE VIEW vw_frequencia_media_turma AS
+CREATE OR REPLACE VIEW vw_frequencia_media_turma AS
 SELECT
     t.id_turma,
     t.turma,
-    st.id_semestre,
-
-    COUNT(DISTINCT al.id_aluno) AS total_alunos,
-
-    COUNT(DISTINCT fq.data_frequencia) AS total_aulas,
-
-    -- Presenças únicas por aluno/data
-    SUM(fq.presenca) AS total_presenca,
-    SUM(1 - fq.presenca) AS total_falta,
-
-    -- Frequência média: total_presenca / (total_alunos * total_aulas)
+    f.id_semestre,
+    COUNT(DISTINCT a.id_aluno) AS total_alunos,
+    CAST(COUNT(*) AS SIGNED) AS total_registros_freq,
+    CAST(SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS SIGNED) AS total_presenca,
+    CAST(SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS SIGNED) AS total_falta,
     CONCAT(
         ROUND(
-            SUM(fq.presenca) / (COUNT(DISTINCT al.id_aluno) * COUNT(DISTINCT fq.data_frequencia)) * 100,
-        2), '%'
+            IF(COUNT(*) = 0, 0,
+               SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) / COUNT(*) * 100
+            ), 2), '%'
     ) AS frequencia_turma
-
 FROM tbl_turma t
-JOIN tbl_semestre_turma st ON st.id_turma = t.id_turma
-JOIN tbl_aluno al ON al.id_turma = t.id_turma
-JOIN (
-    -- pega apenas uma linha por aluno por data
-    SELECT id_aluno, data_frequencia, MAX(presenca) AS presenca
-    FROM tbl_frequencia
-    GROUP BY id_aluno, data_frequencia
-) fq ON fq.id_aluno = al.id_aluno
-
-GROUP BY t.id_turma, t.turma, st.id_semestre;
+JOIN tbl_aluno a ON a.id_turma = t.id_turma
+JOIN tbl_frequencia f ON f.id_aluno = a.id_aluno
+GROUP BY t.id_turma, t.turma, f.id_semestre;
 
 -- VIEW DESEMPENHO TURMA (CORRIGIDA)
 DROP VIEW IF EXISTS vw_desempenho_turma;
@@ -822,7 +827,6 @@ CREATE VIEW vw_desempenho_turma AS
 SELECT
     TPA.id_professor, 
     P.nome AS nome_professor,
-
     MA.id_turma,
     MA.turma,
     MA.id_semestre,
@@ -832,13 +836,10 @@ SELECT
     MA.descricao_atividade,     
     MA.categoria,
     MA.media_atividade,
-
-    -- Campos de frequência (AGORA CORRIGIDOS)
-    FT.frequencia_turma_materia, -- <-- MUDANÇA 1: Nome do campo
+    FT.frequencia_turma_materia,
     FT.total_presenca,
     FT.total_falta,
     FT.total_aulas,
-
     (
         SELECT ROUND(AVG(MA_SUB.media_atividade), 2)
         FROM vw_media_atividades_turma MA_SUB
@@ -851,16 +852,14 @@ SELECT
 FROM 
     vw_media_atividades_turma MA
 LEFT JOIN 
-    vw_frequencia_turma_materia FT -- <-- MUDANÇA 2: View correta
+    vw_frequencia_turma_materia FT
     ON FT.id_turma = MA.id_turma
    AND FT.id_semestre = MA.id_semestre
-   AND FT.id_materia = MA.id_materia  -- <-- MUDANÇA 3: Adicionado JOIN por matéria
+   AND FT.id_materia = MA.id_materia
 JOIN 
-    tbl_atividade TPA
-    ON TPA.id_atividade = MA.id_atividade 
+    tbl_atividade TPA ON TPA.id_atividade = MA.id_atividade 
 JOIN 
-    tbl_professor P
-    ON P.id_professor = TPA.id_professor;
+    tbl_professor P ON P.id_professor = TPA.id_professor;
 
 -- --------------------------
 
@@ -903,37 +902,32 @@ GROUP BY
 
 -- VIEW FREQUENCIA MEDIA TURMA MATERIA SEMESTRE
 
- DROP VIEW IF EXISTS vw_frequencia_turma_materia;
+DROP VIEW IF EXISTS vw_frequencia_turma_materia;
 CREATE OR REPLACE VIEW vw_frequencia_turma_materia AS
 SELECT 
     t.id_turma,
     t.turma,
     m.id_materia,
     m.materia,
-    st.id_semestre,
+    f.id_semestre,
     
-    -- CONTADORES: Usamos CAST(COUNT AS SIGNED) para evitar o erro BigInt (o 'n' no Node.js)
-    CAST(SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS SIGNED) AS total_presenca, -- <<< CAMPO NOVO
-    CAST(SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS SIGNED) AS total_falta,    -- <<< CAMPO NOVO
-    CAST(COUNT(*) AS SIGNED) AS total_aulas,                                            -- <<< CAMPO NOVO
+    CAST(SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS SIGNED) AS total_presenca,
+    CAST(SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS SIGNED) AS total_falta,
+    CAST(COUNT(*) AS SIGNED) AS total_aulas,
     
     CONCAT(
         ROUND(
-            AVG(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) * 100, 
-        2), '%'
+            IF(COUNT(*) = 0, 0,
+               AVG(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) * 100
+            ), 2), '%'
     ) AS frequencia_turma_materia
 FROM 
     tbl_frequencia f
-INNER JOIN tbl_materia m 
-    ON f.id_materia = m.id_materia
-INNER JOIN tbl_aluno a 
-    ON f.id_aluno = a.id_aluno
-INNER JOIN tbl_turma t 
-    ON a.id_turma = t.id_turma
-INNER JOIN tbl_semestre_turma st 
-    ON st.id_turma = t.id_turma
+INNER JOIN tbl_materia m ON f.id_materia = m.id_materia
+INNER JOIN tbl_aluno a ON f.id_aluno = a.id_aluno
+INNER JOIN tbl_turma t ON a.id_turma = t.id_turma
 GROUP BY 
-    t.id_turma, t.turma, m.id_materia, m.materia, st.id_semestre;
+    t.id_turma, t.turma, m.id_materia, m.materia, f.id_semestre;
 
 -- VIEW MEDIA DA MEDIA TURMA
   
@@ -1258,3 +1252,107 @@ INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia) VAL
 -- (3/4 = 75%)
 
 -- ------------------------------------------------------------------------
+
+-- ANALÍSES / MUDANÇAS / INSERÇÃO ACERCA DA FREQUÊNCIA
+
+SET FOREIGN_KEY_CHECKS = 0;
+-- Limpando antes de popular (opcional, só se estiver testando)
+truncate table tbl_frequencia;
+
+-- Frequências para o 1º semestre (2024.1)
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia, id_semestre)
+VALUES
+-- Giovanna Gilio (turma 1)
+(1, '2024-03-01', 1, 1, 1), (1, '2024-03-02', 1, 2, 1), (0, '2024-03-03', 1, 3, 1), (1, '2024-03-04', 1, 4, 1), 
+(0, '2024-03-05', 1, 5, 1), (1, '2024-03-06', 1, 6, 1),
+
+-- Beatriz Souza
+(1, '2024-03-01', 2, 1, 1), (1, '2024-03-02', 2, 2, 1), (1, '2024-03-03', 2, 3, 1), (0, '2024-03-04', 2, 4, 1),
+(1, '2024-03-05', 2, 5, 1), (1, '2024-03-06', 2, 6, 1),
+
+-- Carlos Lima
+(0, '2024-03-01', 3, 1, 1), (1, '2024-03-02', 3, 2, 1), (1, '2024-03-03', 3, 3, 1), (1, '2024-03-04', 3, 4, 1),
+(0, '2024-03-05', 3, 5, 1), (1, '2024-03-06', 3, 6, 1),
+
+-- Diana Rosa
+(1, '2024-03-01', 4, 1, 1), (1, '2024-03-02', 4, 2, 1), (1, '2024-03-03', 4, 3, 1), (1, '2024-03-04', 4, 4, 1),
+(1, '2024-03-05', 4, 5, 1), (1, '2024-03-06', 4, 6, 1),
+
+-- Fernanda Guedes (turma 2)
+(0, '2024-03-01', 6, 1, 1), (0, '2024-03-02', 6, 2, 1), (1, '2024-03-03', 6, 3, 1), (1, '2024-03-04', 6, 4, 1),
+(1, '2024-03-05', 6, 5, 1), (0, '2024-03-06', 6, 6, 1),
+
+-- Gustavo Viana
+(1, '2024-03-01', 7, 1, 1), (0, '2024-03-02', 7, 2, 1), (1, '2024-03-03', 7, 3, 1), (0, '2024-03-04', 7, 4, 1),
+(1, '2024-03-05', 7, 5, 1), (1, '2024-03-06', 7, 6, 1),
+
+-- Heloisa Farias (turma 3)
+(1, '2024-03-01', 8, 1, 1), (1, '2024-03-02', 8, 2, 1), (0, '2024-03-03', 8, 3, 1), (0, '2024-03-04', 8, 4, 1),
+(1, '2024-03-05', 8, 5, 1), (1, '2024-03-06', 8, 6, 1),
+
+-- Igor Santos
+(0, '2024-03-01', 9, 1, 1), (1, '2024-03-02', 9, 2, 1), (0, '2024-03-03', 9, 3, 1), (1, '2024-03-04', 9, 4, 1),
+(1, '2024-03-05', 9, 5, 1), (0, '2024-03-06', 9, 6, 1),
+
+-- Joana Rocha
+(1, '2024-03-01', 10, 1, 1), (1, '2024-03-02', 10, 2, 1), (1, '2024-03-03', 10, 3, 1), (1, '2024-03-04', 10, 4, 1),
+(1, '2024-03-05', 10, 5, 1), (0, '2024-03-06', 10, 6, 1),
+
+-- João Victor Campos dos Santos
+(1, '2024-03-01', 11, 1, 1), (0, '2024-03-02', 11, 2, 1), (1, '2024-03-03', 11, 3, 1), (1, '2024-03-04', 11, 4, 1),
+(1, '2024-03-05', 11, 5, 1), (1, '2024-03-06', 11, 6, 1);
+
+-- ============================
+-- 📅 Frequências do 2º semestre (id_semestre = 2)
+-- ============================
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia, id_semestre)
+VALUES
+-- Alunos da turma 1 (variações de presença)
+(1, '2024-08-01', 1, 1, 2), (0, '2024-08-02', 1, 2, 2), (1, '2024-08-03', 1, 3, 2), (1, '2024-08-04', 1, 4, 2),
+(1, '2024-08-05', 1, 5, 2), (1, '2024-08-06', 1, 6, 2),
+
+(1, '2024-08-01', 2, 1, 2), (1, '2024-08-02', 2, 2, 2), (1, '2024-08-03', 2, 3, 2), (1, '2024-08-04', 2, 4, 2),
+(1, '2024-08-05', 2, 5, 2), (0, '2024-08-06', 2, 6, 2),
+
+(1, '2024-08-01', 3, 1, 2), (0, '2024-08-02', 3, 2, 2), (1, '2024-08-03', 3, 3, 2), (1, '2024-08-04', 3, 4, 2),
+(0, '2024-08-05', 3, 5, 2), (1, '2024-08-06', 3, 6, 2),
+
+-- Turma 2 (Fernanda e Gustavo)
+(1, '2024-08-01', 6, 1, 2), (1, '2024-08-02', 6, 2, 2), (1, '2024-08-03', 6, 3, 2), (0, '2024-08-04', 6, 4, 2),
+(1, '2024-08-05', 6, 5, 2), (1, '2024-08-06', 6, 6, 2),
+
+(0, '2024-08-01', 7, 1, 2), (1, '2024-08-02', 7, 2, 2), (1, '2024-08-03', 7, 3, 2), (1, '2024-08-04', 7, 4, 2),
+(1, '2024-08-05', 7, 5, 2), (0, '2024-08-06', 7, 6, 2),
+
+-- Turma 3 (Heloisa, Igor, Joana, João Victor)
+(1, '2024-08-01', 8, 1, 2), (0, '2024-08-02', 8, 2, 2), (1, '2024-08-03', 8, 3, 2), (0, '2024-08-04', 8, 4, 2),
+(1, '2024-08-05', 8, 5, 2), (1, '2024-08-06', 8, 6, 2),
+
+(1, '2024-08-01', 9, 1, 2), (1, '2024-08-02', 9, 2, 2), (1, '2024-08-03', 9, 3, 2), (1, '2024-08-04', 9, 4, 2),
+(1, '2024-08-05', 9, 5, 2), (0, '2024-08-06', 9, 6, 2),
+
+(1, '2024-08-01', 10, 1, 2), (0, '2024-08-02', 10, 2, 2), (1, '2024-08-03', 10, 3, 2), (1, '2024-08-04', 10, 4, 2),
+(1, '2024-08-05', 10, 5, 2), (1, '2024-08-06', 10, 6, 2),
+
+(0, '2024-08-01', 11, 1, 2), (1, '2024-08-02', 11, 2, 2), (1, '2024-08-03', 11, 3, 2), (1, '2024-08-04', 11, 4, 2),
+(0, '2024-08-05', 11, 5, 2), (1, '2024-08-06', 11, 6, 2);
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Frequência agregada por aluno, matéria e semestre
+SELECT * FROM vw_frequencia_por_aluno_materia;
+
+-- Frequência agregada por turma, matéria e semestre
+SELECT * FROM vw_frequencia_turma_materia;
+
+-- Desempenho do aluno (média + frequência)
+SELECT * FROM vw_desempenho_aluno;
+
+-- Desempenho geral (gestão)
+SELECT * FROM vw_desempenho_turma;
+
+-- INSERT PARA FICAR MUDANDO A PRESENÇA
+INSERT INTO tbl_frequencia (presenca, data_frequencia, id_aluno, id_materia, id_semestre)
+VALUES
+-- Alunos da turma 1 (variações de presença)
+(1, '2024-08-03', 11, 1, 2)

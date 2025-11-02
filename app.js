@@ -528,7 +528,7 @@ app.get('/v1/analytica-ai/ranking/gestao/:idGestao', async function (request, re
 
 /********* INSIGHTS *********/ // NOVO BLOCO
 
-const insightController = require('./controller/insights/controllerGestao.js');
+const insightController = require('./controller/insights/controllerInsights.js');
 
 /**
  * Rota para gerar insights de Aluno (POST /v1/analytica-ai/insights/aluno?materia=4&semestre=2)
@@ -556,43 +556,41 @@ app.post('/v1/analytica-ai/insights/aluno', async function (request, response){
 /**
  * Rota para gerar insights de Professor (POST /v1/analytica-ai/insights/professor?materia=4&semestre=2)
  */
-app.post('/v1/analytica-ai/insights/professor', async function (request, response){
-    let body = request.body;
-    let idMateria = request.query.materia;
-    let idSemestre = request.query.semestre;
-    
+app.post('/v1/analytica-ai/insights/professor', async (req, res) => {
+    const body = req.body;
+    const idSemestre = req.query.semestre;
+
     if (!body || !body.desempenho) {
-        return response.status(400).json(message.ERROR_NO_DATA);
+        return res.status(400).json(message.ERROR_NO_DATA);
     }
-    if (!idMateria || !idSemestre) {
-        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
+    if (!idSemestre) {
+        return res.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
     }
 
-    let result = await insightController.getInsight(body, 'professor', String(idSemestre), String(idMateria));
-    
-    response.status(result.status_code);
-    response.json(result);
+    // Controller pega idTurma do body, idMateria do body também
+    const result = await insightController.getInsight(body, 'professor', String(idSemestre), undefined);
+
+    res.status(result.status_code).json(result);
 });
 
 /**
  * Rota para gerar insights de Gestão (POST /v1/analytica-ai/insights/gestao?materia=4&semestre=2)
  */
-app.post('/v1/analytica-ai/insights/gestao', async function (request, response){
-    let body = request.body;
-    let idMateria = request.query.materia;
-    let idSemestre = request.query.semestre;
-    
+app.post('/v1/analytica-ai/insights/gestao', async (req, res) => {
+    const body = req.body;
+    const idSemestre = req.query.semestre;
+
     if (!body || !body.desempenho) {
-        return response.status(400).json(message.ERROR_NO_DATA);
+        return res.status(400).json(message.ERROR_NO_DATA);
     }
-    if (!idMateria || !idSemestre) {
-        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
+    if (!idSemestre) {
+        return res.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
     }
 
-    let result = await insightController.getInsight(body, 'gestao', String(idSemestre), String(idMateria));
-    
-    response.status(result.status_code);
-    response.json(result);
+    // Controller pega idTurma do body, idMateria do body também
+    const result = await insightController.getInsight(body, 'gestao', String(idSemestre), undefined);
+
+    res.status(result.status_code).json(result);
 });
 
 

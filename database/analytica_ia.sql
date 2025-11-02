@@ -241,43 +241,36 @@ CREATE TABLE tbl_observacao (
 );
 
 CREATE TABLE tbl_insights (
-    id_insights INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    
-    -- Colunas de Controle
-    data_geracao DATETIME NOT NULL,
-    tipo_insight VARCHAR(50) NOT NULL, -- Ex: 'Aluno', 'Professor', 'Gestao'
-    
-    -- Conteúdo do Insight (Ajustado para armazenar textos longos)
-    titulo VARCHAR(255) NOT NULL, -- O título curto do insight
-    conteudo TEXT NOT NULL,       -- O corpo do insight/relatório (TEXT para até 65k caracteres)
-
-    -- Colunas de Associação (Ajustado para cobrir Aluno, Professor E a Matéria/Semestre)
-    id_materia INT NOT NULL,
-    id_semestre INT NOT NULL,
-    
-    -- Colunas de Contexto (O insight deve ser para 1 pessoa, por isso apenas 1 pode ser NOT NULL)
-    -- NOTA: Use INT NULL por padrão, e adicione uma trigger ou lógica no Node.js
-    --       para garantir que APENAS UM desses IDs esteja preenchido por vez.
-    id_aluno INT NULL,
-    id_professor INT NULL,
-    id_gestao INT NULL, -- Adicionado para insights de Gestão (Global)
-
-    -- Chaves Estrangeiras (Mantidas ou ajustadas)
-    CONSTRAINT fk_insights_materia
-        FOREIGN KEY (id_materia)
-        REFERENCES tbl_materia (id_materia),
-    CONSTRAINT fk_insights_semestre
-        FOREIGN KEY (id_semestre)
-        REFERENCES tbl_semestre (id_semestre),
-    CONSTRAINT fk_insights_aluno
-        FOREIGN KEY (id_aluno)
-        REFERENCES tbl_aluno (id_aluno),
-    CONSTRAINT fk_insights_professor
-        FOREIGN KEY (id_professor)
-        REFERENCES tbl_professor (id_professor),
-    CONSTRAINT fk_insights_gestao -- Novo FK
-        FOREIGN KEY (id_gestao)
-        REFERENCES tbl_gestao (id_gestao)
+id_insights INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+data_geracao DATETIME NOT NULL,
+tipo_insight VARCHAR(50) NOT NULL, 
+titulo VARCHAR(255) NOT NULL,
+conteudo TEXT NOT NULL,
+id_materia INT NOT NULL,
+id_semestre INT NOT NULL,
+id_aluno INT NULL,
+id_professor INT NULL,
+id_gestao INT NULL,
+id_turma INT NULL, 
+-- Chaves Estrangeiras
+CONSTRAINT fk_insights_materia
+    FOREIGN KEY (id_materia)
+    REFERENCES tbl_materia (id_materia),
+CONSTRAINT fk_insights_semestre
+    FOREIGN KEY (id_semestre)
+    REFERENCES tbl_semestre (id_semestre),
+CONSTRAINT fk_insights_aluno
+    FOREIGN KEY (id_aluno)
+    REFERENCES tbl_aluno (id_aluno),
+CONSTRAINT fk_insights_professor
+    FOREIGN KEY (id_professor)
+    REFERENCES tbl_professor (id_professor),
+CONSTRAINT fk_insights_gestao
+    FOREIGN KEY (id_gestao)
+    REFERENCES tbl_gestao (id_gestao),
+CONSTRAINT fk_insights_turma
+    FOREIGN KEY (id_turma)
+    REFERENCES tbl_turma (id_turma)
 );
 
 CREATE TABLE tbl_relatorio (

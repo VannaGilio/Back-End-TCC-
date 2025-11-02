@@ -20,6 +20,12 @@ const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 
+const dotenv = require('dotenv'); // NOVO: Para carregar variáveis de ambiente (API Keys)
+const message = require('./modulo/config.js'); // NOVO: Módulo de mensagens (erros/sucesso)
+
+// Carrega variáveis de ambiente do arquivo .env
+dotenv.config(); // NOVO: Chamada de configuração
+
 const app = express()
 
 app.use(bodyParser.json())
@@ -519,6 +525,77 @@ app.get('/v1/analytica-ai/ranking/gestao/:idGestao', async function (request, re
     response.status(result.status_code);
     response.json(result);
 });
+
+/********* INSIGHTS *********/ // NOVO BLOCO
+
+const insightController = require('./controller/insights/controllerGestao.js');
+
+/**
+ * Rota para gerar insights de Aluno (POST /v1/analytica-ai/insights/aluno?materia=4&semestre=2)
+ * Espera o JSON de desempenho no body e os IDs de Cache na Query.
+ */
+app.post('/v1/analytica-ai/insights/aluno', async function (request, response){
+    let body = request.body;
+    let idMateria = request.query.materia;
+    let idSemestre = request.query.semestre;
+    
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA);
+    }
+    // O Controller precisa desses IDs como string para a chave de cache
+    if (!idMateria || !idSemestre) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
+    }
+
+    let result = await insightController.getInsight(body, 'aluno', String(idSemestre), String(idMateria));
+    
+    response.status(result.status_code);
+    response.json(result);
+});
+
+/**
+ * Rota para gerar insights de Professor (POST /v1/analytica-ai/insights/professor?materia=4&semestre=2)
+ */
+app.post('/v1/analytica-ai/insights/professor', async function (request, response){
+    let body = request.body;
+    let idMateria = request.query.materia;
+    let idSemestre = request.query.semestre;
+    
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA);
+    }
+    if (!idMateria || !idSemestre) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
+    }
+
+    let result = await insightController.getInsight(body, 'professor', String(idSemestre), String(idMateria));
+    
+    response.status(result.status_code);
+    response.json(result);
+});
+
+/**
+ * Rota para gerar insights de Gestão (POST /v1/analytica-ai/insights/gestao?materia=4&semestre=2)
+ */
+app.post('/v1/analytica-ai/insights/gestao', async function (request, response){
+    let body = request.body;
+    let idMateria = request.query.materia;
+    let idSemestre = request.query.semestre;
+    
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA);
+    }
+    if (!idMateria || !idSemestre) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
+    }
+
+    let result = await insightController.getInsight(body, 'gestao', String(idSemestre), String(idMateria));
+    
+    response.status(result.status_code);
+    response.json(result);
+});
+
+
 
 app.listen('8080', function(){
     console.log('API funcionando...')

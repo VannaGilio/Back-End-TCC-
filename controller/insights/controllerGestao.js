@@ -1,22 +1,23 @@
-const InsightDAO = require('../../dao/insight.dao');
+const InsightDAO = require('../../model/DAO/insights/insightsDAO.js');
 // Biblioteca para comunicação com a Azure OpenAI
 const OpenAI = require('openai'); 
-const message = require('../../module/config.js'); // Assumindo o caminho para suas mensagens de erro/sucesso
+const message = require('../../modulo/config.js'); 
 
 // --- CONFIGURAÇÃO DA AZURE OPENAI (CRÍTICO) ---
 // O Controller carrega as variáveis de ambiente que você configurou no .env
 const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
 const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY;
-// Nome da implantação que você criou: gpt-35-turbo-analytica
 const AZURE_OPENAI_DEPLOYMENT_NAME = process.env.AZURE_OPENAI_DEPLOYMENT_NAME; 
 
 // Inicializa o cliente OpenAI configurado para o Azure
 const openai = new OpenAI({
     apiKey: AZURE_OPENAI_API_KEY,
-    // O baseURL deve incluir o deployment name, conforme documentação do Azure
-    baseURL: `${AZURE_OPENAI_ENDPOINT}openai/deployments/${AZURE_OPENAI_DEPLOYMENT_NAME}`,
-    // Versão da API do Azure (pode ser ajustada, mas esta é a mais recente estável)
-    defaultQuery: { 'api-version': '2024-02-15-preview' }, 
+    // MUDANÇA CRÍTICA: Use o bloco 'azure' para configurar o endpoint e deployment.
+    azure: {
+        endpoint: AZURE_OPENAI_ENDPOINT, 
+        deployment: AZURE_OPENAI_DEPLOYMENT_NAME,
+        apiVersion: '2024-02-15-preview', // Versão da API do Azure
+    },
 });
 
 // --- FUNÇÃO 1: PROMPT PARA NÍVEL DE ACESSO 'ALUNO' (Análise Individual) ---
@@ -186,6 +187,9 @@ const generateInsightFromAI = async (body, tipoInsight, idSemestre, idMateria) =
  * @returns {object} Retorna o JSON de resposta (status, message e o insight).
  */
 const getInsight = async (body, tipoInsight, idSemestre, idMateria) => {
+    // Importa o DAO aqui para evitar erro de dependência circular durante o carregamento dos módulos
+    const InsightDAO = require('../../model/DAO/insights/insightsDAO.js');
+    
     try {
         if (!body || !body.desempenho || body.desempenho.length === 0) {
             return message.ERROR_NO_DATA; 
@@ -230,7 +234,6 @@ const getInsight = async (body, tipoInsight, idSemestre, idMateria) => {
         // 3. CACHE MISS: GERAR COM A IA (GASTO DE CRÉDITO)
         console.log(`Analytica AI: Gerando novo Insight (${tipoInsight}) via Azure OpenAI. Consumo de crédito.`);
         
-        // CORREÇÃO: Passando idSemestre e idMateria para generateInsightFromAI (necessário apenas para o cache, mas mantido na assinatura para clareza)
         const newInsight = await generateInsightFromAI(body, tipoInsight, idSemestreCache, idMateriaCache);
 
         // 4. ARMAZENAR NO CACHE (DAO) - É executado em segundo plano (fire-and-forget)

@@ -1,7 +1,10 @@
-// Importa o cliente Prisma e a biblioteca 'moment' para trabalhar com datas/horas
-// Se você não tiver 'moment', instale com: npm install moment
-const { prisma } = require('../database/prisma_client'); 
+// Importa a classe PrismaClient para instanciar o cliente dentro deste DAO
+const { PrismaClient } = require('@prisma/client');
+// Importa a biblioteca 'moment' para trabalhar com datas/horas
 const moment = require('moment'); 
+
+// Instancia o PrismaClient
+const prisma = new PrismaClient();
 
 // Define o período de validade do cache em horas. 
 // Insights mais antigos que 24 horas serão regerados pela IA.

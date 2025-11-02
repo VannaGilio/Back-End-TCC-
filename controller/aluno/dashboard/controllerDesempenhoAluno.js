@@ -20,7 +20,7 @@ const buscarDesempenhoAluno = async function (idAluno, idMateria, idSemestre) {
                     desempenhoMap.set(item.id_materia, {
                         aluno: {
                             id_aluno: item.id_aluno,
-                            nome: item.nome
+                            nome: item.nome_aluno
                         },
                         frequencia: {
                             porcentagem_frequencia: item.porcentagem_frequencia,

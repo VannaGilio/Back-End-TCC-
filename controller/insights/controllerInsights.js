@@ -194,13 +194,21 @@ export const getInsight = async (dashboardData, tipoInsight, idSemestre, idMater
         );
 
         if (insight) {
-            console.log("Analytica AI: Insight encontrado no cache.");
+            console.log("Analytica AI: Insight encontrado no cache.")
+
+            const data = insight.data_geracao
+            const dataFormatada = data.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
             return {
                 status_code: 200,
                 message: message.SUCCESS_CREATED_ITEM.message,
                 insight: {
                     titulo: insight.titulo,
-                    conteudo: insight.conteudo
+                    conteudo: insight.conteudo,
+                    data: dataFormatada,
                 }
             };
         }

@@ -195,7 +195,7 @@ CREATE TABLE tbl_frequencia (
     data_frequencia DATE,
     id_aluno INT NOT NULL,
     id_materia INT NOT NULL,
-    id_semestre INT NOT NULL
+    id_semestre INT 
     CONSTRAINT fk_frequencia_aluno
         FOREIGN KEY (id_aluno)
         REFERENCES tbl_aluno (id_aluno)
@@ -275,12 +275,16 @@ CONSTRAINT fk_insights_turma
 
 CREATE TABLE tbl_relatorio (
     id_relatorio INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    relatorio VARCHAR(500),
-    titulo VARCHAR(45),
-    data_criacao DATE,
+    link TEXT NOT NULL,
+    data_geracao DATETIME NOT NULL,
+    tipo_relatorio VARCHAR(40) NOT NULL,
+    tipo_nivel VARCHAR(50) NOT NULL,
     id_aluno INT NOT NULL,
     id_professor INT NOT NULL,
+    id_gestao INT NOT NULL,
     id_materia INT NOT NULL,
+    id_turma INT NOT NULL,
+    id_semestre INT NOT NULL,
     CONSTRAINT fk_relatorio_aluno
         FOREIGN KEY (id_aluno)
         REFERENCES tbl_aluno (id_aluno),
@@ -289,7 +293,16 @@ CREATE TABLE tbl_relatorio (
         REFERENCES tbl_professor (id_professor),
     CONSTRAINT fk_relatorio_materia
         FOREIGN KEY (id_materia)
-        REFERENCES tbl_materia (id_materia)
+        REFERENCES tbl_materia (id_materia),
+    CONSTRAINT fk_relatorio_gestao
+        FOREIGN KEY (id_gestao)
+        REFERENCES tbl_gestao (id_gestao),
+    CONSTRAINT fk_relatorio_turma
+        FOREIGN KEY (id_turma)
+        REFERENCES tbl_turma (id_turma),
+    CONSTRAINT fk_relatorio_semestre
+        FOREIGN KEY (id_semestre)
+        REFERENCES tbl_semestre (id_semestre)
 );
 
 ------------------------------------------------------------

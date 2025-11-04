@@ -1,6 +1,5 @@
-// controller/insightsController.js
 const { AzureOpenAI } = require("openai")
-const insightsDAO = require('../../model/DAO/insights/insightsDAO.js')
+const relatoriosDAO = require('../../model/DAO/relatorios/relatoriosDAO.js')
 const message = require('../../modulo/config.js')
 const dotenv = require('dotenv')
 
@@ -22,16 +21,34 @@ const client = new AzureOpenAI({
 });
 
 // --- 2️⃣ FUNÇÃO DE GERAÇÃO DE PROMPT (AJUSTADA PARA CONTEÚDO CURTO) ---
-const buildPrompt = (dashboardData, tipoInsight) => {
+const buildPrompt = (dashboardData, tipoNivel) => {
+
+        console.log(">>> getRelatorio chamado. tipoNivel:", tipoNivel);
+        console.log(">>> dashboardData.desempenho?.length:", dashboardData?.desempenho?.length);
+        console.log(">>> idMateria (param):", idMateria, "idSemestre (param):", idSemestre);
+        console.log(">>> firstItem:", JSON.stringify(dashboardData.desempenho?.[0] || {}, null, 2));
         const jsonString = JSON.stringify(dashboardData, null, 2);
 
         let role, focoAnalise;
 
-        // Define a persona e o foco de acordo com o tipoInsight
-        switch (tipoInsight) {
+        // Define a persona e o foco de acordo com o tipoNivel
+        switch (tipoNivel) {                                                                                  
                 case 'aluno':
                         role = "um mentor de desempenho escolar focado em te guiar. Sua análise deve ser motivacional, construtiva e voltada para o crescimento individual. Use linguagem encorajadora.";
-                        focoAnalise = "Analise o desempenho individual (notas e frequência) em detalhe. Identifique pontos fortes e áreas específicas de melhoria (por exemplo, se a nota da prova foi melhor que a do trabalho).";
+                        focoAnalise = `
+                        Analise o desempenho individual do aluno, com ênfase na frequência e no comprometimento geral. 
+                        Identifique pontos fortes e áreas específicas de melhoria (por exemplo, se a frequência em Biologia foi maior que em Matemática). 
+                        Gere um relatório textual curto e prático, com dados apresentados **em tabelas Markdown** (| coluna | coluna |). 
+                        Cada seção deve conter uma tabela sempre que houver dados numéricos ou comparativos.
+                        
+                        Siga esta estrutura:
+
+                        **Desempenho de Frequência**  
+                        - Mostre uma tabela com frequência por disciplina.  
+                        - Analise como a presença impacta o desempenho geral.  
+                        - Acrescente uma observação motivacional sobre o comportamento do aluno.
+                        `;
+
                         break;
 
                 case 'professor':
@@ -40,7 +57,7 @@ const buildPrompt = (dashboardData, tipoInsight) => {
                         break;
 
                 case 'gestao':
-                        role = "um consultor estratégico de educação para a gestão escolar. Seu objetivo é fornecer insights de alto nível sobre a performance da turma para apoiar a tomada de decisões administrativas e estratégicas. Use linguagem corporativa e baseada em indicadores.";
+                        role = "um consultor estratégico de educação para a gestão escolar. Seu objetivo é fornecer relatorios de alto nível sobre a performance da turma para apoiar a tomada de decisões administrativas e estratégicas. Use linguagem corporativa e baseada em indicadores.";
                         focoAnalise = "Analise o desempenho da TURMA como um INDICADOR-CHAVE. Foque em identificar pontos de atenção que possam exigir intervenção da gestão, como baixa frequência média ou desequilíbrio significativo entre as médias de avaliações.";
                         break;
 
@@ -50,37 +67,45 @@ const buildPrompt = (dashboardData, tipoInsight) => {
         }
 
 
-        const systemPrompt = `Você é o Analytica AI, ${role}. Sua função é analisar detalhadamente o JSON de desempenho fornecido e gerar um insight construtivo e informativo.
+        const systemPrompt = `Você é o Analytica AI, ${role}. Sua função é analisar detalhadamente o JSON de desempenho fornecido e gerar um relatório construtivo e informativo.
 
-${focoAnalise}
+        ${focoAnalise}
 
-Regras de Formatação:
-1. O resultado DEVE ser um objeto JSON válido, contendo SOMENTE as chaves 'titulo' e 'conteudo'.
-2. O 'titulo' deve ser curto e chamativo (máximo 8 palavras).
-3. O 'conteudo' DEVE ser um texto com no máximo 4 linhas. Mantenha-o extremamente conciso, direto ao ponto e sem quebras de linha que gerem parágrafos vazios.
+        Regras de Formatação:
+        1. Sempre que possível, use **tabelas Markdown** para apresentar dados quantitativos, no formato:
+           | Coluna | Coluna | Coluna |
+           |---------|---------|---------|
+           | Valor   | Valor   | Valor   |
+        2. Use linguagem coerente com o papel definido no tipo de relatório (aluno = motivacional, professor = técnico, gestão = corporativa).
+        3. O texto deve ser bem estruturado e legível, com parágrafos curtos, sem excesso de quebras de linha.
+        4. Não retorne JSON, apenas texto puro com Markdown.
+        
+        Exemplo de saída esperada (estrutura simplificada):
+        
+        **Desempenho de Frequência**  
+        | Disciplina  | Aulas Previstas | Aulas Assistidas | Faltas | Frequência |
+        |--------------|-----------------|------------------|--------|------------|
+        | Matemática   |        20       |        18        |    2   |     90%    |
+        
+        **Observação:** Excelente presença e bom engajamento geral, refletindo comprometimento nas aulas.
+        `;
 
-Exemplo de Saída Esperada:
-{
- "titulo": "Aproveitamento Sólido em Geometria",
- "conteudo": "Excelente domínio do conteúdo de álgebra e geometria, refletido em notas consistentemente altas nas provas. Manter o foco nas revisões semanais será crucial para finalizar o semestre com sucesso."
-}`;
-
-        const userPrompt = `Analise este JSON de desempenho e gere um insight de acordo com as regras:
-${jsonString}`;
+        const userPrompt = `Analise este JSON de desempenho e gere um relatório de frequência completo, seguindo as regras:
+        ${jsonString}`;
 
         return { systemPrompt, userPrompt };
 };
 
 // --- 3️⃣ FUNÇÃO DE CHAMADA À IA ---
-const generateInsightFromAI = async (dashboardData, tipoInsight) => { // AGORA RECEBE tipoInsight
-        console.log("Analytica AI: Gerando novo Insight via Azure OpenAI.");
+const generateRelatorioFromAI = async (dashboardData, tipoNivel) => { // AGORA RECEBE tipoNivel
+        console.log("Analytica AI: Gerando novo Relatório via Azure OpenAI.");
 
-        const { systemPrompt, userPrompt } = buildPrompt(dashboardData, tipoInsight);
+        const { systemPrompt, userPrompt } = buildPrompt(dashboardData, tipoNivel);
 
         try {
                 const response = await client.chat.completions.create({
                         model: modelName,
-                        response_format: { type: "json_object" },
+                        // response_format: { type: "json_object" },
                         messages: [
                                 { role: "system", content: systemPrompt },
                                 { role: "user", content: userPrompt }
@@ -89,16 +114,16 @@ const generateInsightFromAI = async (dashboardData, tipoInsight) => { // AGORA R
                         max_tokens: 1000
                 });
 
-                const insightText = response.choices[0].message.content.trim();
+                const relatorioText = response.choices[0].message.content.trim();
 
                 try {
-                        return JSON.parse(insightText);
+                        return JSON.parse(relatorioText);
                 } catch (e) {
                         console.error("[Controller] Falha ao parsear JSON da IA:", e);
-                        console.error("[Controller] Conteúdo bruto:", insightText);
+                        console.error("[Controller] Conteúdo bruto:", relatorioText);
                         return {
                                 titulo: "Falha de Formatação da IA",
-                                conteudo: "A IA gerou o conteúdo, mas não seguiu o formato JSON esperado. Conteúdo bruto: " + insightText.substring(0, 500) + "..."
+                                conteudo: "A IA gerou o conteúdo, mas não seguiu o formato JSON esperado. Conteúdo bruto: " + relatorioText.substring(0, 500) + "..."
                         };
                 }
         } catch (error) {
@@ -108,7 +133,7 @@ const generateInsightFromAI = async (dashboardData, tipoInsight) => { // AGORA R
 };
 
 // --- 4️⃣ FUNÇÃO PRINCIPAL DO CONTROLLER (REFATORADA) ---
-const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => {
+const getRelatorio = async (dashboardData, tipoNivel, tipoRelatorio, idSemestre, idMateria) => {
         try {
                 // Pega o primeiro item do array de desempenho
                 const firstItem = dashboardData.desempenho?.[0];
@@ -118,13 +143,13 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 let idChave;
 
                 // --- 1. LÓGICA DE EXTRAÇÃO DA CHAVE DE CACHE E IDs ESPECÍFICOS ---
-                if (tipoInsight === 'aluno') {
+                if (tipoNivel === 'aluno') {
                         idChave = firstItem?.aluno?.id_aluno;
                         if (!idChave) {
                                 throw new Error("ID do Aluno ausente no JSON de desempenho (desempenho[0].aluno.id_aluno).");
                         }
 
-                } else if (tipoInsight === 'professor') {
+                } else if (tipoNivel === 'professor') {
                         // Busca o ID do Professor
                         idChave = firstItem?.professor?.id_professor;
                         if (!idChave) {
@@ -137,7 +162,7 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                                 throw new Error("ID da Turma ausente no JSON de desempenho (desempenho[0].turma.id_turma) para o Professor.");
                         }
 
-                } else if (tipoInsight === 'gestao') {
+                } else if (tipoNivel === 'gestao') {
                         // Busca o ID da Gestão
                         idChave = firstItem?.gestao?.id_gestao;
                         if (!idChave) {
@@ -151,23 +176,28 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                         }
 
                 } else {
-                        throw new Error(`'tipoInsight' desconhecido ou não implementado: ${tipoInsight}`);
+                        throw new Error(`'tipoNivel' desconhecido ou não implementado: ${tipoNivel}`);
                 }
                 // --- FIM DA LÓGICA DE EXTRAÇÃO ---
 
                 // --- 2. VERIFICAÇÃO E EXTRAÇÃO DE idMateria/idSemestre ---
-                let finalIdMateria = idMateria;
-                let finalIdSemestre = idSemestre;
+                // let finalIdMateria = idMateria;
+                // let finalIdSemestre = idSemestre;
+                console.log(">>> Antes da conversão:", idMateria, idSemestre);
+                let finalIdMateria = Number(idMateria);
+                let finalIdSemestre = Number(idSemestre);
+                console.log(">>> Depois da conversão:", finalIdMateria, finalIdSemestre);
+        
 
                 // Se for professor, e idMateria não foi passado na URL, busca no JSON
-                if (tipoInsight === 'professor' && !finalIdMateria) {
+                if (tipoNivel === 'professor' && !finalIdMateria) {
                         const materiaIdFromData = firstItem?.materia?.materia_id;
                         if (materiaIdFromData) {
                                 finalIdMateria = materiaIdFromData;
                         }
                 }
 
-                if (tipoInsight === 'gestao' && !finalIdMateria) {
+                if (tipoNivel === 'gestao' && !finalIdMateria) {
                         const materiaIdFromData = firstItem?.materia?.id_materia;
                         if (materiaIdFromData) {
                                 finalIdMateria = materiaIdFromData;
@@ -177,60 +207,59 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 // idMateria é obrigatório para todos, exceto se a Gestão estiver em um painel que não exige matéria específica.
                 // Assumindo que o Aluno/Professor *sempre* olha uma matéria, e a Gestão, na maioria dos casos.
                 if (!finalIdMateria || !finalIdSemestre) {
+                        console.error("ERRO: finalIdMateria ou finalIdSemestre ausente");
+                        console.error({ finalIdMateria, finalIdSemestre });
                         throw new Error("Os IDs de Matéria e/ou Semestre são obrigatórios e devem ser passados como parâmetros.");
-                }
+                }                      
 
                 // --- 3. TENTA BUSCAR NO CACHE (INCLUINDO ID DA TURMA) ---
                 // Prepara o ID da Turma para o cache (passa null/undefined para Aluno)
-                const cacheIdTurma = (tipoInsight === 'professor' || tipoInsight === 'gestao') ? Number(finalIdTurma) : undefined;
+                const cacheIdTurma = (tipoNivel === 'professor' || tipoNivel === 'gestao') ? Number(finalIdTurma) : undefined;
 
 
-                let insight = await insightsDAO.findInsightCache(
+                let relatorio = await relatoriosDAO.findRelatorioCache(
                         idChave,
-                        tipoInsight,
+                        tipoNivel,
+                        tipoRelatorio,
                         Number(finalIdMateria),
                         Number(finalIdSemestre),
                         cacheIdTurma // Novo parâmetro para Professor/Gestão
                 );
 
-        if (insight) {
-            console.log("Analytica AI: Insight encontrado no cache.")
-
-            const data = insight.data_geracao
-            const dataFormatada = data.toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-            return {
-                status_code: 200,
-                message: message.SUCCESS_CREATED_ITEM.message,
-                insight: {
-                    titulo: insight.titulo,
-                    conteudo: insight.conteudo,
-                    data: dataFormatada,
-                }
-            };
-        }
+                if (relatorio) {
+                        console.log("Analytica AI: Relatório encontrado no cache.");
+                        return {
+                                status_code: 200,
+                                message: message.SUCCESS_CREATED_ITEM.message,
+                                relatorio: {
+                                        link: relatorio.link
+                                }
+                        };
+                }
 
                 // --- 4. GERAÇÃO E SALVAMENTO NO CACHE ---
-                insight = await generateInsightFromAI(dashboardData, tipoInsight);
+                relatorio = await generateRelatorioFromAI(dashboardData, tipoNivel);
+
+                // --- 4️⃣ GERAÇÃO E SALVAMENTO NO CACHE ---
+                const { linkPDF } = await generateRelatorioFromAI(dashboardData, tipoNivel);
 
                 // Salva no cache (Incluindo ID da Turma)
-                await insightsDAO.insertInsightCache({
+                await relatoriosDAO.insertRelatorioCache({
                         idChave,
-                        tipoInsight,
+                        tipoNivel,
+                        tipoRelatorio: "frequência",
                         idMateria: Number(finalIdMateria),
                         idSemestre: Number(finalIdSemestre),
                         idTurma: cacheIdTurma, // Novo campo para Professor/Gestão
-                        titulo: insight.titulo,
-                        conteudo: insight.conteudo
+                        link: linkPDF
                 });
 
                 return {
                         status_code: 200,
                         message: message.SUCCESS_CREATED_ITEM.message,
-                        insight
+                        relatorio: {
+                                link: linkPDF
+                        }
                 };
 
         } catch (error) {
@@ -238,7 +267,7 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 return {
                         status_code: 500,
                         message: "Devido a erros internos no servidor da CONTROLLER, não foi possivel processar a requisição!!!",
-                        insight: {
+                        relatorio: {
                                 titulo: "Análise Indisponível",
                                 conteudo: "O serviço de IA não pôde processar a análise no momento. Detalhes: " + (error.message || "Erro desconhecido.")
                         }
@@ -247,5 +276,6 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
 };
 
 module.exports = {
-        getInsight
+        generateRelatorioFromAI,
+        getRelatorio
 }

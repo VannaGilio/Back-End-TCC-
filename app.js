@@ -9,16 +9,15 @@
    npm install @prisma/client
    npx prisma migrate dev 
    npm install nodemailer
-
-   sinc schema.prisma:
-
-   npx prisma db pull
-   npx prisma generate
+   npm install openai
+   npm install moment
+   npm install dotenv
 */
 
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
+const path = require('path');
 
 const dotenv = require('dotenv'); // NOVO: Para carregar variáveis de ambiente (API Keys)
 const message = require('./modulo/config.js'); // NOVO: Módulo de mensagens (erros/sucesso)
@@ -37,6 +36,8 @@ app.use((request, response, next)=>{
     app.use(cors())
     next()
 })
+
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 /*********USUARIO*********/
 
@@ -593,6 +594,49 @@ app.post('/v1/analytica-ai/insights/gestao', async (req, res) => {
     res.status(result.status_code).json(result);
 });
 
+/**
+ * Rota para gerar relatório frequência de Aluno (POST /v1/analytica-ai/relatorios/aluno?materia=4&semestre=2)
+ * Espera o JSON de desempenho no body e os IDs de Cache na Query.
+ */
+
+const relatorioController = require('./controller/relatorios/controllerRelatoriosFrequencia.js');
+
+app.post('/v1/analytica-ai/relatorios/aluno', async function (request, response) {
+    const body = request.body;
+    const idMateria = request.query.materia;
+    const idSemestre = request.query.semestre;
+
+    console.log("=== ROTA /relatorios/aluno chamada ===");
+    console.log("query:", request.query);
+    console.log("body keys:", Object.keys(request.body || {}));
+
+    console.log('Materia:', idMateria, 'Semestre:', idSemestre);
+
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA);
+    }
+
+    if (!idMateria || !idSemestre) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS);
+    }
+
+    try {
+        const result = await relatorioController.getRelatorio(
+            body,
+            'aluno',              // tipoNivel
+            String(idSemestre),
+            String(idMateria)
+        );
+
+        response.status(result.status_code).json(result);
+    } catch (error) {
+        console.error("Erro na rota /relatorios/aluno:", error);
+        response.status(500).json({
+            status_code: 500,
+            message: "Erro interno ao gerar relatório."
+        });
+    }
+});
 
 
 app.listen('8080', function(){

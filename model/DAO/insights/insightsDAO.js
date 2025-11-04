@@ -1,10 +1,10 @@
-// model/DAO/insights/insightsDAO.js
+//model/DAO/insights/insightsDAO.js
 
 const { PrismaClient } = require('@prisma/client');
 const moment = require('moment');
 
 const prisma = new PrismaClient();
-const CACHE_VALIDITY_HOURS = 24;
+const CACHE_VALIDITY_HOURS = 240;
 
 /**
  * Checa se já existe um insight recente (válido) para a combinação Chave/Matéria/Semestre/Turma.

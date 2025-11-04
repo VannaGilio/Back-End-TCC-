@@ -1,5 +1,4 @@
 const { PrismaClient } = require('@prisma/client');
-const e = require('express');
 const prisma = new PrismaClient()
 
 const insertProfessor = async function(professor){
@@ -37,18 +36,19 @@ const selectByIdProfessor = async function(id){
 const updateByIdProfessor = async function(professor){
     try {
         let sql = `update tbl_professor set nome = '${professor.nome}',
-                                         email = '${professor.email}',
-                                         telefone = '${professor.telefone}'
-                                                                            
-                                    where id_professor = ${professor.id_professor};`
+                                            email = '${professor.email}',
+                                            telefone = '${professor.telefone}'
+                                            
+        where id_professor = ${professor.id_professor};`
+        console.log(professor)
 
         let result = await prisma.$executeRawUnsafe(sql)
-
         if(result)
             return true
         else
             return false
     } catch (error) {
+        console.error(error)
         return false
     }
 }

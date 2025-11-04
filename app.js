@@ -9,11 +9,9 @@
    npm install @prisma/client
    npx prisma migrate dev 
    npm install nodemailer
-
-   sinc schema.prisma:
-
-   npx prisma db pull
-   npx prisma generate
+   npm install openai
+   npm install moment
+   npm install dotenv
 */
 
 const express = require('express')

@@ -71,10 +71,11 @@ const atualizarProfessorPorId = async function (id, professor, contentType) {
                 !professor.telefone || professor.telefone.length > 14 ||
                 !professor.email || professor.email.length > 45 
               ){
-                    
                 return message.ERROR_REQUIRED_FIELDS
             }else{
                 let select = await professorDAO.selectByIdProfessor(parseInt(id))
+
+                console.log(professor)
 
                 if (select != false || typeof (select) == 'object') {
                     if (select.length > 0) {

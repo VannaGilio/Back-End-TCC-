@@ -55,7 +55,7 @@ const findRelatorioCache = async function (idChave, tipoNivel, tipoRelatorio, id
         return result.length > 0 ? result[0] : null;
 
     } catch (error) {
-        console.error("[DAO] Erro ao buscar cache de relatórios:", error);
+        console.error("[DAO] Erro ao buscar cache:", error);
         throw error;
     }
 };
@@ -88,9 +88,9 @@ const insertRelatorioCache = async function (relatorioData) {
                 id_gestao,
                 id_materia,
                 id_turma,
-                id_semestre,
+                id_semestre
             ) VALUES (
-                '${relatorioData.link.replace(/'/g, "\\'")}'
+                '${relatorioData.link.replace(/'/g, "\\'")}',
                 NOW(),
                 '${relatorioData.tipoRelatorio}',
                 '${relatorioData.tipoNivel}',
@@ -99,7 +99,7 @@ const insertRelatorioCache = async function (relatorioData) {
                 ${idGestao},
                 ${relatorioData.idMateria},
                 ${idTurma},
-                ${relatorioData.idSemestre},
+                ${relatorioData.idSemestre}
             );
         `);
 

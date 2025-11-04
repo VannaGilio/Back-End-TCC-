@@ -21,13 +21,13 @@ const client = new AzureOpenAI({
 });
 
 // --- 2️⃣ FUNÇÃO DE GERAÇÃO DE PROMPT (AJUSTADA PARA CONTEÚDO CURTO) ---
-const buildPrompt = (dashboardData, tipoInsight) => {
+const buildPrompt = (dashboardData, tipoNivel) => {
         const jsonString = JSON.stringify(dashboardData, null, 2);
 
         let role, focoAnalise;
 
-        // Define a persona e o foco de acordo com o tipoInsight
-        switch (tipoInsight) {
+        // Define a persona e o foco de acordo com o tipoNivel
+        switch (tipoNivel) {
                 case 'aluno':
                         role = "um mentor de desempenho escolar focado em te guiar. Sua análise deve ser motivacional, construtiva e voltada para o crescimento individual. Use linguagem encorajadora.";
                         focoAnalise = "Analise o desempenho individual (notas e frequência) em detalhe. Identifique pontos fortes e áreas específicas de melhoria (por exemplo, se a nota da prova foi melhor que a do trabalho).";
@@ -47,7 +47,6 @@ const buildPrompt = (dashboardData, tipoInsight) => {
                         role = "um analista de dados generalista";
                         focoAnalise = "Forneça uma análise básica dos dados.";
         }
-
 
         const systemPrompt = `Você é o Analytica AI, ${role}. Sua função é analisar detalhadamente o JSON de desempenho fornecido e gerar um insight construtivo e informativo.
 
@@ -71,10 +70,10 @@ ${jsonString}`;
 };
 
 // --- 3️⃣ FUNÇÃO DE CHAMADA À IA ---
-const generateInsightFromAI = async (dashboardData, tipoInsight) => { // AGORA RECEBE tipoInsight
+const generateInsightFromAI = async (dashboardData, tipoNivel) => { // AGORA RECEBE tipoNivel
         console.log("Analytica AI: Gerando novo Insight via Azure OpenAI.");
 
-        const { systemPrompt, userPrompt } = buildPrompt(dashboardData, tipoInsight);
+        const { systemPrompt, userPrompt } = buildPrompt(dashboardData, tipoNivel);
 
         try {
                 const response = await client.chat.completions.create({
@@ -107,7 +106,7 @@ const generateInsightFromAI = async (dashboardData, tipoInsight) => { // AGORA R
 };
 
 // --- 4️⃣ FUNÇÃO PRINCIPAL DO CONTROLLER (REFATORADA) ---
-const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => {
+const getInsight = async (dashboardData, tipoNivel, idSemestre, idMateria) => {
         try {
                 // Pega o primeiro item do array de desempenho
                 const firstItem = dashboardData.desempenho?.[0];
@@ -117,13 +116,13 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 let idChave;
 
                 // --- 1. LÓGICA DE EXTRAÇÃO DA CHAVE DE CACHE E IDs ESPECÍFICOS ---
-                if (tipoInsight === 'aluno') {
+                if (tipoNivel === 'aluno') {
                         idChave = firstItem?.aluno?.id_aluno;
                         if (!idChave) {
                                 throw new Error("ID do Aluno ausente no JSON de desempenho (desempenho[0].aluno.id_aluno).");
                         }
 
-                } else if (tipoInsight === 'professor') {
+                } else if (tipoNivel === 'professor') {
                         // Busca o ID do Professor
                         idChave = firstItem?.professor?.id_professor;
                         if (!idChave) {
@@ -136,7 +135,7 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                                 throw new Error("ID da Turma ausente no JSON de desempenho (desempenho[0].turma.id_turma) para o Professor.");
                         }
 
-                } else if (tipoInsight === 'gestao') {
+                } else if (tipoNivel === 'gestao') {
                         // Busca o ID da Gestão
                         idChave = firstItem?.gestao?.id_gestao;
                         if (!idChave) {
@@ -150,7 +149,7 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                         }
 
                 } else {
-                        throw new Error(`'tipoInsight' desconhecido ou não implementado: ${tipoInsight}`);
+                        throw new Error(`'tipoNivel' desconhecido ou não implementado: ${tipoNivel}`);
                 }
                 // --- FIM DA LÓGICA DE EXTRAÇÃO ---
 
@@ -159,14 +158,14 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 let finalIdSemestre = idSemestre;
 
                 // Se for professor, e idMateria não foi passado na URL, busca no JSON
-                if (tipoInsight === 'professor' && !finalIdMateria) {
+                if (tipoNivel === 'professor' && !finalIdMateria) {
                         const materiaIdFromData = firstItem?.materia?.materia_id;
                         if (materiaIdFromData) {
                                 finalIdMateria = materiaIdFromData;
                         }
                 }
 
-                if (tipoInsight === 'gestao' && !finalIdMateria) {
+                if (tipoNivel === 'gestao' && !finalIdMateria) {
                         const materiaIdFromData = firstItem?.materia?.id_materia;
                         if (materiaIdFromData) {
                                 finalIdMateria = materiaIdFromData;
@@ -181,12 +180,12 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
 
                 // --- 3. TENTA BUSCAR NO CACHE (INCLUINDO ID DA TURMA) ---
                 // Prepara o ID da Turma para o cache (passa null/undefined para Aluno)
-                const cacheIdTurma = (tipoInsight === 'professor' || tipoInsight === 'gestao') ? Number(finalIdTurma) : undefined;
+                const cacheIdTurma = (tipoNivel === 'professor' || tipoNivel === 'gestao') ? Number(finalIdTurma) : undefined;
 
 
                 let insight = await insightsDAO.findInsightCache(
                         idChave,
-                        tipoInsight,
+                        tipoNivel,
                         Number(finalIdMateria),
                         Number(finalIdSemestre),
                         cacheIdTurma // Novo parâmetro para Professor/Gestão
@@ -205,12 +204,12 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 }
 
                 // --- 4. GERAÇÃO E SALVAMENTO NO CACHE ---
-                insight = await generateInsightFromAI(dashboardData, tipoInsight);
+                insight = await generateInsightFromAI(dashboardData, tipoNivel);
 
                 // Salva no cache (Incluindo ID da Turma)
                 await insightsDAO.insertInsightCache({
                         idChave,
-                        tipoInsight,
+                        tipoNivel,
                         idMateria: Number(finalIdMateria),
                         idSemestre: Number(finalIdSemestre),
                         idTurma: cacheIdTurma, // Novo campo para Professor/Gestão

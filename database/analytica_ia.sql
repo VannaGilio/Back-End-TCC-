@@ -1582,3 +1582,64 @@ INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES
 
 -- -----------------------------------------------------------------------
 
+
+-- **************************************************************
+-- INSERÇÃO DE 10 NOVOS ALUNOS NA TURMA 3 (Matemática)
+-- **************************************************************
+
+-- Alunos fictícios (Turma 3)
+CALL sp_cadastrar_usuario_completo('10001', 'a12a12a1', 'aluno', 'Pedro Azevedo', 'pedro.a@aluno.com', '10001', '2003-02-10', '2012', 3);
+CALL sp_cadastrar_usuario_completo('10002', 'a13a13a1', 'aluno', 'Mariana Lopes', 'mariana.l@aluno.com', '10002', '2004-06-23', '2013', 3);
+CALL sp_cadastrar_usuario_completo('10003', 'a14a14a1', 'aluno', 'Rafael Oliveira', 'rafael.o@aluno.com', '10003', '2002-09-14', '2014', 3);
+CALL sp_cadastrar_usuario_completo('10004', 'a15a15a1', 'aluno', 'Larissa Mendes', 'larissa.m@aluno.com', '10004', '2001-12-05', '2015', 3);
+CALL sp_cadastrar_usuario_completo('10005', 'a16a16a1', 'aluno', 'Felipe Duarte', 'felipe.d@aluno.com', '10005', '2003-04-11', '2016', 3);
+CALL sp_cadastrar_usuario_completo('10006', 'a17a17a1', 'aluno', 'Camila Torres', 'camila.t@aluno.com', '10006', '2002-07-19', '2017', 3);
+CALL sp_cadastrar_usuario_completo('10007', 'a18a18a1', 'aluno', 'Rodrigo Pires', 'rodrigo.p@aluno.com', '10007', '2003-03-25', '2018', 3);
+CALL sp_cadastrar_usuario_completo('10008', 'a19a19a1', 'aluno', 'Bianca Reis', 'bianca.r@aluno.com', '10008', '2004-10-02', '2019', 3);
+CALL sp_cadastrar_usuario_completo('10009', 'a20a20a1', 'aluno', 'Gabriel Moreira', 'gabriel.m@aluno.com', '10009', '2003-11-09', '2020', 3);
+CALL sp_cadastrar_usuario_completo('10010', 'a21a21a1', 'aluno', 'Sofia Almeida', 'sofia.a@aluno.com', '10010', '2002-08-28', '2021', 3);
+
+-- **************************************************************
+-- ASSOCIAÇÃO ÀS ATIVIDADES DE MATEMÁTICA EXISTENTES
+-- (ID_ATIVIDADE = 1 -> Prova Mat S1 | ID_ATIVIDADE = 2 -> Teste Mat S2)
+-- **************************************************************
+
+-- Pedro Azevedo (ID_ALUNO = 12)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 12), (2, 12);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.0, LAST_INSERT_ID()-1, 1), (8.5, LAST_INSERT_ID(), 1);
+
+-- Mariana Lopes (ID_ALUNO = 13)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 13), (2, 13);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (6.0, LAST_INSERT_ID()-1, 1), (7.0, LAST_INSERT_ID(), 1);
+
+-- Rafael Oliveira (ID_ALUNO = 14)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 14), (2, 14);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (9.0, LAST_INSERT_ID()-1, 1), (9.5, LAST_INSERT_ID(), 1);
+
+-- Larissa Mendes (ID_ALUNO = 15)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 15), (2, 15);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (8.0, LAST_INSERT_ID()-1, 1), (7.5, LAST_INSERT_ID(), 1);
+
+-- Felipe Duarte (ID_ALUNO = 16)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 16), (2, 16);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (5.5, LAST_INSERT_ID()-1, 1), (6.5, LAST_INSERT_ID(), 1);
+
+-- Camila Torres (ID_ALUNO = 17)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 17), (2, 17);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (9.5, LAST_INSERT_ID()-1, 1), (10.0, LAST_INSERT_ID(), 1);
+
+-- Rodrigo Pires (ID_ALUNO = 18)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 18), (2, 18);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (6.0, LAST_INSERT_ID()-1, 1), (6.5, LAST_INSERT_ID(), 1);
+
+-- Bianca Reis (ID_ALUNO = 19)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 19), (2, 19);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (8.0, LAST_INSERT_ID()-1, 1), (8.5, LAST_INSERT_ID(), 1);
+
+-- Gabriel Moreira (ID_ALUNO = 20)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 20), (2, 20);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.5, LAST_INSERT_ID()-1, 1), (9.0, LAST_INSERT_ID(), 1);
+
+-- Sofia Almeida (ID_ALUNO = 21)
+INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 21), (2, 21);
+INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (5.0, LAST_INSERT_ID()-1, 1), (5.5, LAST_INSERT_ID(), 1);

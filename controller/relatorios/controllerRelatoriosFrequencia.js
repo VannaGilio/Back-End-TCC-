@@ -87,12 +87,11 @@ const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
                                
                                 ### 1. Identificação
                                 Inclua:
-                                - Nome do professor
-                                - Nome da turma
-                                - Nome da disciplina
+                                - nome
+                                - turma
+                                - materia
 
                                 Formato esperado:
-                                "Relatório técnico de frequência da disciplina X — Turma Y."
 
                                 ### 2. Regras de interpretação da frequência da turma
 
@@ -127,7 +126,7 @@ const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
                                 Gere um relatório institucional baseado **exclusivamente na frequência** da turma, de acordo com a matéria e o semestre.  
                                 Não use termos motivacionais nem análise de desempenho individual ou notas.
                 
-                                ### 1. Identificação (obrigatório)
+                                1. Identificação (obrigatório)
                                 - Turma analisada
                                 - Disciplina
                                 - Período / semestre
@@ -171,7 +170,7 @@ const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
 
                 Antes de iniciar o relatório, escreva uma breve mensagem de boas-vindas, como:
                 
-                "##Olá, [nome]! 👋 Seja bem-vindo(a)!                  
+                "##👋 Olá, [nome]! Seja bem-vindo(a)!                  
                 Este é o seu Relatório Escolar de Frequência, gerado com apoio de inteligência artificial.  
                 Aqui você encontrará uma análise clara, objetiva e personalizada sobre sua participação nas aulas."
                 

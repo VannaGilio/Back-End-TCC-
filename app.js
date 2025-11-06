@@ -640,7 +640,6 @@ app.post('/v1/analytica-ai/relatorios/aluno', async function (request, response)
     }
 })
 
-
 app.post('/v1/analytica-ai/relatorios/professor', async function (request, response) {
     const body = request.body
     const idTurma = request.query.turma
@@ -673,7 +672,38 @@ app.post('/v1/analytica-ai/relatorios/professor', async function (request, respo
     }
 })
 
+app.post('/v1/analytica-ai/relatorios/gestao', async function (request, response) {
+    const body = request.body
+    const idTurma = request.query.turma
+    const idSemestre = request.query.semestre
+    const idMateria= request.query.materia
 
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA)
+    }
+
+    if (!idTurma || !idSemestre || !idMateria) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS)
+    }
+
+    try {
+        const result = await relatorioController.getRelatorio(
+            body,
+            'gestao',              // tipoNivel
+            'frequência',         // tipoRelatorio (ou o tipo real que quiser)
+            String(idSemestre),
+            String(idTurma)
+        );
+
+        response.status(result.status_code).json(result)
+    } catch (error) {
+        console.error("Erro na rota /relatorios/professor:", error)
+        response.status(500).json({
+            status_code: 500,
+            message: "Erro interno ao gerar relatório."
+        })
+    }
+})
 app.listen('8080', function(){
     console.log('API funcionando...')
 })

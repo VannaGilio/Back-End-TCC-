@@ -23,9 +23,7 @@ const client = new AzureOpenAI({
 
 // --- 2️⃣ FUNÇÃO DE GERAÇÃO DE PROMPT (AJUSTADA PARA CONTEÚDO CURTO) ---
 const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
-        console.log(">>> getRelatorio chamado. tipoNivel:", tipoNivel);
-        console.log(">>> dashboardData.desempenho?.length:", dashboardData?.desempenho?.length);
-        console.log(">>> firstItem:", JSON.stringify(dashboardData.desempenho?.[0] || {}, null, 2));
+        
         const jsonString = JSON.stringify(dashboardData, null, 2);
 
         let role, focoAnalise;
@@ -34,30 +32,129 @@ const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
         switch (tipoNivel) {                                                                                  
                 case 'aluno':
                         role = "um mentor de desempenho escolar focado em te guiar. Sua análise deve ser motivacional, construtiva e voltada para o crescimento individual. Use linguagem encorajadora.";
+
                         focoAnalise = `
                         Analise o desempenho individual do aluno, com ênfase na frequência e no comprometimento geral. 
                         Identifique pontos fortes e áreas específicas de melhoria (por exemplo, se a frequência em Biologia foi maior que em Matemática). 
                         Gere um relatório textual curto e prático, com dados apresentados **em tabelas Markdown** (| coluna | coluna |). 
-                        Cada seção deve conter uma tabela sempre que houver dados numéricos ou comparativos.
-                        
+                        Apenas a seção de frequência deve conter uma tabela com os dados numéricos ou comparativos.
+
+                        **Observação importante sobre frequência:**  
+                        - Considere que **75% é o mínimo obrigatório** para o aluno não reprovar por faltas.  
+                        - Frequências **entre 75% e 80% devem ser tratadas como sinal de alerta**, destacando que o aluno está no limite e precisa melhorar a presença.  
+                        - Frequências **abaixo de 75% devem ser classificadas como críticas**, reforçando o risco de reprovação.
+
+
+                        **Regras obrigatórias para interpretação da frequência (NÃO IGNORAR):**
+                        - **75% é o mínimo para NÃO reprovar.**
+                        - Frequência exatamente **75% deve ser classificada como RUIM**, pois o aluno está no limite da reprovação.
+                        - Frequências de **76% a 79% são classificadas como RISCO**, pois ainda estão perigosamente próximas do mínimo.
+                        - Frequências **abaixo de 75% são CRÍTICAS**, e devem receber alerta claro de risco de reprovação.
+                        - Frequências **80% ou mais são aceitáveis**.
+
+                        ### 1. Identificação
+                        Inclua:
+                        - Nome do Aluno
+                        - Nome da turma
+                        - Nome da disciplina
+
+                        Ao analisar cada disciplina, deixe claro se o aluno está:
+                        - ✅ Adequado (≥ 80%)
+                        - ⚠️ Em risco (76%–79%)
+                        - ❌ Ruim — no limite da reprovação (75%)
+                        - 💥 Crítico — risco alto de reprovação (< 75%)
+
                         Siga esta estrutura:
 
                         **Desempenho de Frequência**  
                         - Mostre uma tabela com frequência por disciplina.  
-                        - Analise como a presença impacta o desempenho geral.  
-                        - Acrescente uma observação motivacional sobre o comportamento do aluno.
+                        - Destaque disciplinas com frequência abaixo de 80%, apontando se o aluno está:
+                                - **No limite** (75%–79%)
+                                - **Em risco** (< 75%)  
+                        - Analise como a presença impacta o desempenho.
+                        - Acrescente uma observação motivacional sobre como pequenas mudanças de rotina podem melhorar tanto presença quanto desempenho.
                         `;
+
 
                         break;
 
                 case 'professor':
                         role = "um analista de desempenho pedagógico especialista em tendências de turma. Seu objetivo é ajudar o professor a identificar padrões e planejar intervenções eficazes. Use linguagem técnica e focada em resultados de ensino.";
-                        focoAnalise = "Analise o desempenho geral da TURMA na matéria. Foque em métricas de frequência, média da turma, e o impacto de cada tipo de atividade (Prova vs. Trabalho) no resultado final. Sugira estratégias pedagógicas.";
+                        focoAnalise = `
+                                Você é um analista educacional especializado em gerar relatórios técnicos para professores.
+                                Seu objetivo é transformar os dados enviados no body da requisição em um relatório claro,
+                                objetivo, técnico e focado em acompanhamento pedagógico.
+                               
+                                ### 1. Identificação
+                                Inclua:
+                                - Nome do professor
+                                - Nome da turma
+                                - Nome da disciplina
+
+                                Formato esperado:
+                                "Relatório técnico de frequência da disciplina X — Turma Y."
+
+                                ### 2. Regras de interpretação da frequência da turma
+
+                                Classificação:
+                                - 80% ou mais → ✅ Frequência adequada  
+                                - 76% a 79% → ⚠️ Frequência em observação  
+                                - 75% → ❌ Frequência no limite mínimo  
+                                - Abaixo de 75% → 🔥 Frequência crítica  
+                                - total_aulas = 0 → “Nenhuma aula registrada no período analisado.”
+
+                                ### 3. Tabela obrigatória
+                                | Aulas Previstas | Presenças | Faltas | Frequência (%) | Situação |
+                                |-----------------|-----------|--------|----------------|----------|
+
+                                ### 4. Análise técnica
+                                Inclua:
+                                - interpretação objetiva dos dados
+                                - impacto na dinâmica da turma
+                                - possíveis indicadores gerais (ex.: baixa adesão, início de período, falta de engajamento)
+                                - observações sobre necessidade de atenção
+
+                                Nunca individualize alunos.  
+                                Nunca mencione desempenho, notas, provas ou atividades.
+
+                                Retorne somente texto com Markdown.
+                        `;
                         break;
 
                 case 'gestao':
                         role = "um consultor estratégico de educação para a gestão escolar. Seu objetivo é fornecer relatorios de alto nível sobre a performance da turma para apoiar a tomada de decisões administrativas e estratégicas. Use linguagem corporativa e baseada em indicadores.";
-                        focoAnalise = "Analise o desempenho da TURMA como um INDICADOR-CHAVE. Foque em identificar pontos de atenção que possam exigir intervenção da gestão, como baixa frequência média ou desequilíbrio significativo entre as médias de avaliações.";
+                        focoAnalise = `
+                                Gere um relatório institucional baseado **exclusivamente na frequência** da turma, de acordo com a matéria e o semestre.  
+                                Não use termos motivacionais nem análise de desempenho individual ou notas.
+                
+                                ### 1. Identificação (obrigatório)
+                                - Turma analisada
+                                - Disciplina
+                                - Período / semestre
+                                - Responsável pelo relatório (professor ou sistema)
+                
+                                ### 2. Indicadores globais
+                                Utilize apenas dados de frequência.  
+                                Classificação:
+                                - ✅ ≥ 80% — Frequência estável  
+                                - ⚠️ 76% a 79% — Zona de atenção  
+                                - ❌ 75% — Limite mínimo legal  
+                                - 🔥 < 75% — Indicador crítico, risco regulatório  
+                                - total_aulas = 0 → “Sem registro de aulas no período.”
+                
+                                ### 3. Tabela obrigatória (Markdown)
+                                | Aulas Previstas | Presenças | Faltas | Frequência (%) | Classificação |
+                                |-----------------|-----------|--------|----------------|---------------|
+                
+                                ### 4. Análise gerencial
+                                - Interpretação da tendência da presença da turma  
+                                - Impacto em metas institucionais  
+                                - Riscos administrativos ou regulatórios  
+                                - Sugestões de intervenção (ex.: campanhas, contato com responsáveis, revisão de horários)
+                
+                                Proibido:
+                                - Falar de notas, desempenho, comportamento ou dificuldades individuais.
+                                - Fazer narrativa motivacional (somente texto corporativo).`;
                         break;
 
                 default:
@@ -68,25 +165,32 @@ const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
 
         const systemPrompt = `Você é o Analytica AI, ${role}. Sua função é analisar detalhadamente o JSON de desempenho fornecido e gerar um relatório construtivo e informativo.
 
-        ${focoAnalise}
+        ${focoAnalise} 
 
-        Regras de Formatação:
-        1. Sempre que possível, use **tabelas Markdown** para apresentar dados quantitativos, no formato:
-           | Coluna | Coluna | Coluna |
-           |---------|---------|---------|
-           | Valor   | Valor   | Valor   |
-        2. Use linguagem coerente com o papel definido no tipo de relatório (aluno = motivacional, professor = técnico, gestão = corporativa).
-        3. O texto deve ser bem estruturado e legível, com parágrafos curtos, sem excesso de quebras de linha.
-        4. Não retorne JSON, apenas texto puro com Markdown.
-        
-        Exemplo de saída esperada (estrutura simplificada):
-        
-        **Desempenho de Frequência**  
-        | Disciplina  | Aulas Previstas | Aulas Assistidas | Faltas | Frequência |
-        |--------------|-----------------|------------------|--------|------------|
-        | Matemática   |        20       |        18        |    2   |     90%    |
-        
-        **Observação:** Excelente presença e bom engajamento geral, refletindo comprometimento nas aulas.
+                Regras de Formatação:
+
+                Antes de iniciar o relatório, escreva uma breve mensagem de boas-vindas, como:
+                
+                "##Olá, [nome]! 👋 Seja bem-vindo(a)!                  
+                Este é o seu Relatório Escolar de Frequência, gerado com apoio de inteligência artificial.  
+                Aqui você encontrará uma análise clara, objetiva e personalizada sobre sua participação nas aulas."
+                
+                1. Sempre que possível, use **tabelas Markdown** para apresentar dados quantitativos, no formato:
+                | Coluna | Coluna | Coluna |
+                |---------|---------|---------|
+                | Valor   | Valor   | Valor   |
+                2. Use linguagem coerente com o papel definido no tipo de relatório (aluno = motivacional, professor = técnico, gestão = corporativa).
+                3. O texto deve ser bem estruturado e legível, com parágrafos curtos, sem excesso de quebras de linha.
+                4. Não retorne JSON, apenas texto puro com Markdown.
+                
+                Exemplo de saída esperada (estrutura simplificada):
+                
+                **Desempenho de Frequência**  
+                | Aulas Previstas | Aulas Assistidas | Faltas | Frequência |
+                |-----------------|------------------|--------|------------|
+                |        20       |        18        |    2   |     90%    |
+                
+                **Observação:** Excelente presença e bom engajamento geral, refletindo comprometimento nas aulas.
         `;
 
         const userPrompt = `Analise este JSON de desempenho e gere um relatório de frequência completo, seguindo as regras:
@@ -115,7 +219,39 @@ const generateRelatorioFromAI = async (dashboardData, tipoNivel, idMateria, idSe
                 
                 const relatorioMarkdown = response.choices[0].message.content.trim();
 
-                const nomeArquivo = `relatorio_frequencia${tipoNivel}${dashboardData.desempenho[0]?.aluno?.id_aluno || 'turma'}`;
+                const gerarNomeArquivo = (tipoNivel, desempenho, idMateria, idSemestre) => {
+                        const item = desempenho?.[0];
+                    
+                        let identificador = "";
+                        let turma = item?.turma?.id_turma ? `T${item.turma.id_turma}` : "TURMA";
+                    
+                        switch (tipoNivel) {
+                            case "aluno":
+                                identificador = `ALUNO-${item?.aluno?.id_aluno || "SEMID"}`;
+                                break;
+                    
+                            case "professor":
+                                identificador = `PROF-${item?.professor?.id_professor || "SEMID"}-${turma}`;
+                                break;
+                    
+                            case "gestao":
+                                identificador = `GESTAO-${item?.gestao?.id_gestao || "SEMID"}-${turma}`;
+                                break;
+                    
+                            default:
+                                identificador = "RELATORIO";
+                        }
+                    
+                        return `relatorio-frequencia-${identificador}-M${idMateria}-S${idSemestre}`;
+                    };
+                
+                const nomeArquivo = gerarNomeArquivo(
+                        tipoNivel,
+                        dashboardData.desempenho,
+                        idMateria,
+                        idSemestre
+                );
+                    
                 const linkPDF = await gerarPDF(relatorioMarkdown, nomeArquivo);
 
                 return {

@@ -279,11 +279,11 @@ CREATE TABLE tbl_relatorio (
     data_geracao DATETIME NOT NULL,
     tipo_relatorio VARCHAR(40) NOT NULL,
     tipo_nivel VARCHAR(50) NOT NULL,
-    id_aluno INT NOT NULL,
-    id_professor INT NOT NULL,
-    id_gestao INT NOT NULL,
+    id_aluno INT,
+    id_professor INT,
+    id_gestao INT,
     id_materia INT NOT NULL,
-    id_turma INT NOT NULL,
+    id_turma INT,
     id_semestre INT NOT NULL,
     CONSTRAINT fk_relatorio_aluno
         FOREIGN KEY (id_aluno)

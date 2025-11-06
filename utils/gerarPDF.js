@@ -17,7 +17,7 @@ async function gerarPDF(markdown, nomeBase = 'relatorio') {
   const css = `
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 24px; color: #111; }
-      h1,h2,h3 { color: #0b5; }
+      h1,h2,h3 { color: #7d53f3; }
       table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
       table, th, td { border: 1px solid #999; }
       th, td { padding: 6px 8px; text-align: left; vertical-align: top; font-size: 12px; }

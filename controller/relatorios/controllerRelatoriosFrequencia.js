@@ -2,6 +2,7 @@ const { AzureOpenAI } = require("openai")
 const relatoriosDAO = require('../../model/DAO/relatorios/relatoriosDAO.js')
 const message = require('../../modulo/config.js')
 const dotenv = require('dotenv')
+const { gerarPDF } = require('../../utils/gerarPDF.js');
 
 dotenv.config();
 
@@ -21,11 +22,9 @@ const client = new AzureOpenAI({
 });
 
 // --- 2️⃣ FUNÇÃO DE GERAÇÃO DE PROMPT (AJUSTADA PARA CONTEÚDO CURTO) ---
-const buildPrompt = (dashboardData, tipoNivel) => {
-
+const buildPrompt = (dashboardData, tipoNivel, idMateria, idSemestre) => {
         console.log(">>> getRelatorio chamado. tipoNivel:", tipoNivel);
         console.log(">>> dashboardData.desempenho?.length:", dashboardData?.desempenho?.length);
-        console.log(">>> idMateria (param):", idMateria, "idSemestre (param):", idSemestre);
         console.log(">>> firstItem:", JSON.stringify(dashboardData.desempenho?.[0] || {}, null, 2));
         const jsonString = JSON.stringify(dashboardData, null, 2);
 
@@ -97,35 +96,32 @@ const buildPrompt = (dashboardData, tipoNivel) => {
 };
 
 // --- 3️⃣ FUNÇÃO DE CHAMADA À IA ---
-const generateRelatorioFromAI = async (dashboardData, tipoNivel) => { // AGORA RECEBE tipoNivel
+const generateRelatorioFromAI = async (dashboardData, tipoNivel, idMateria, idSemestre) => { // AGORA RECEBE tipoNivel
         console.log("Analytica AI: Gerando novo Relatório via Azure OpenAI.");
 
-        const { systemPrompt, userPrompt } = buildPrompt(dashboardData, tipoNivel);
+        const { systemPrompt, userPrompt } = buildPrompt(dashboardData, tipoNivel, idMateria, idSemestre);
 
         try {
                 const response = await client.chat.completions.create({
                         model: modelName,
-                        // response_format: { type: "json_object" },
+                        // Removendo response_format, pois agora esperamos texto puro/Markdown.
                         messages: [
-                                { role: "system", content: systemPrompt },
-                                { role: "user", content: userPrompt }
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
                         ],
                         temperature: 0.5,
                         max_tokens: 1000
-                });
+                        });
+                
+                const relatorioMarkdown = response.choices[0].message.content.trim();
 
-                const relatorioText = response.choices[0].message.content.trim();
+                const nomeArquivo = `relatorio_frequencia${tipoNivel}${dashboardData.desempenho[0]?.aluno?.id_aluno || 'turma'}`;
+                const linkPDF = await gerarPDF(relatorioMarkdown, nomeArquivo);
 
-                try {
-                        return JSON.parse(relatorioText);
-                } catch (e) {
-                        console.error("[Controller] Falha ao parsear JSON da IA:", e);
-                        console.error("[Controller] Conteúdo bruto:", relatorioText);
-                        return {
-                                titulo: "Falha de Formatação da IA",
-                                conteudo: "A IA gerou o conteúdo, mas não seguiu o formato JSON esperado. Conteúdo bruto: " + relatorioText.substring(0, 500) + "..."
-                        };
-                }
+                return {
+                        linkPDF: linkPDF,
+                        conteudoMarkdown: relatorioMarkdown 
+                };
         } catch (error) {
                 console.error("[Controller] Erro na chamada Azure OpenAI:", error);
                 throw error;
@@ -135,145 +131,135 @@ const generateRelatorioFromAI = async (dashboardData, tipoNivel) => { // AGORA R
 // --- 4️⃣ FUNÇÃO PRINCIPAL DO CONTROLLER (REFATORADA) ---
 const getRelatorio = async (dashboardData, tipoNivel, tipoRelatorio, idSemestre, idMateria) => {
         try {
-                // Pega o primeiro item do array de desempenho
-                const firstItem = dashboardData.desempenho?.[0];
-
-                // Variável para armazenar o ID da Turma (usado por Professor e Gestão)
-                let finalIdTurma = null;
-                let idChave;
-
-                // --- 1. LÓGICA DE EXTRAÇÃO DA CHAVE DE CACHE E IDs ESPECÍFICOS ---
-                if (tipoNivel === 'aluno') {
-                        idChave = firstItem?.aluno?.id_aluno;
-                        if (!idChave) {
-                                throw new Error("ID do Aluno ausente no JSON de desempenho (desempenho[0].aluno.id_aluno).");
-                        }
-
-                } else if (tipoNivel === 'professor') {
-                        // Busca o ID do Professor
-                        idChave = firstItem?.professor?.id_professor;
-                        if (!idChave) {
-                                throw new Error("ID do Professor ausente no JSON de desempenho (desempenho[0].professor.id_professor).");
-                        }
-
-                        // Busca o ID da Turma (Obrigatório para o Professor)
-                        finalIdTurma = firstItem?.turma?.id_turma;
-                        if (!finalIdTurma) {
-                                throw new Error("ID da Turma ausente no JSON de desempenho (desempenho[0].turma.id_turma) para o Professor.");
-                        }
-
-                } else if (tipoNivel === 'gestao') {
-                        // Busca o ID da Gestão
-                        idChave = firstItem?.gestao?.id_gestao;
-                        if (!idChave) {
-                                throw new Error("ID da Gestão ausente no JSON de desempenho (desempenho[0].gestao.id_gestao).");
-                        }
-
-                        // Busca o ID da Turma (Obrigatório para a Gestão, pois a análise é por turma)
-                        finalIdTurma = firstItem?.turma?.id_turma;
-                        if (!finalIdTurma) {
-                                throw new Error("ID da Turma ausente no JSON de desempenho (desempenho[0].turma.id_turma) para a Gestão.");
-                        }
-
-                } else {
-                        throw new Error(`'tipoNivel' desconhecido ou não implementado: ${tipoNivel}`);
+            // Pega o primeiro item do array de desempenho
+            const firstItem = dashboardData.desempenho?.[0];
+    
+            // Variável para armazenar o ID da Turma (usado por Professor e Gestão)
+            let finalIdTurma = null;
+            let idChave;
+    
+            // --- 1. LÓGICA DE EXTRAÇÃO DA CHAVE DE CACHE E IDs ESPECÍFICOS ---
+            if (tipoNivel === 'aluno') {
+                idChave = firstItem?.aluno?.id_aluno;
+                if (!idChave) {
+                    throw new Error("ID do Aluno ausente no JSON de desempenho (desempenho[0].aluno.id_aluno).");
                 }
-                // --- FIM DA LÓGICA DE EXTRAÇÃO ---
-
-                // --- 2. VERIFICAÇÃO E EXTRAÇÃO DE idMateria/idSemestre ---
-                // let finalIdMateria = idMateria;
-                // let finalIdSemestre = idSemestre;
-                console.log(">>> Antes da conversão:", idMateria, idSemestre);
-                let finalIdMateria = Number(idMateria);
-                let finalIdSemestre = Number(idSemestre);
-                console.log(">>> Depois da conversão:", finalIdMateria, finalIdSemestre);
-        
-
-                // Se for professor, e idMateria não foi passado na URL, busca no JSON
-                if (tipoNivel === 'professor' && !finalIdMateria) {
-                        const materiaIdFromData = firstItem?.materia?.materia_id;
-                        if (materiaIdFromData) {
-                                finalIdMateria = materiaIdFromData;
-                        }
+            } else if (tipoNivel === 'professor') {
+                idChave = firstItem?.professor?.id_professor;
+                finalIdTurma = firstItem?.turma?.id_turma;
+                if (!idChave) {
+                    throw new Error("ID do Professor ausente no JSON de desempenho (desempenho[0].professor.id_professor).");
                 }
-
-                if (tipoNivel === 'gestao' && !finalIdMateria) {
-                        const materiaIdFromData = firstItem?.materia?.id_materia;
-                        if (materiaIdFromData) {
-                                finalIdMateria = materiaIdFromData;
-                        }
+                if (!finalIdTurma) {
+                    throw new Error("ID da Turma ausente no JSON de desempenho (desempenho[0].turma.id_turma) para o Professor.");
                 }
-
-                // idMateria é obrigatório para todos, exceto se a Gestão estiver em um painel que não exige matéria específica.
-                // Assumindo que o Aluno/Professor *sempre* olha uma matéria, e a Gestão, na maioria dos casos.
-                if (!finalIdMateria || !finalIdSemestre) {
-                        console.error("ERRO: finalIdMateria ou finalIdSemestre ausente");
-                        console.error({ finalIdMateria, finalIdSemestre });
-                        throw new Error("Os IDs de Matéria e/ou Semestre são obrigatórios e devem ser passados como parâmetros.");
-                }                      
-
-                // --- 3. TENTA BUSCAR NO CACHE (INCLUINDO ID DA TURMA) ---
-                // Prepara o ID da Turma para o cache (passa null/undefined para Aluno)
-                const cacheIdTurma = (tipoNivel === 'professor' || tipoNivel === 'gestao') ? Number(finalIdTurma) : undefined;
-
-
-                let relatorio = await relatoriosDAO.findRelatorioCache(
-                        idChave,
-                        tipoNivel,
-                        tipoRelatorio,
-                        Number(finalIdMateria),
-                        Number(finalIdSemestre),
-                        cacheIdTurma // Novo parâmetro para Professor/Gestão
-                );
-
-                if (relatorio) {
-                        console.log("Analytica AI: Relatório encontrado no cache.");
-                        return {
-                                status_code: 200,
-                                message: message.SUCCESS_CREATED_ITEM.message,
-                                relatorio: {
-                                        link: relatorio.link
-                                }
-                        };
+            } else if (tipoNivel === 'gestao') {
+                idChave = firstItem?.gestao?.id_gestao;
+                finalIdTurma = firstItem?.turma?.id_turma;
+                if (!idChave) {
+                    throw new Error("ID da Gestão ausente no JSON de desempenho (desempenho[0].gestao.id_gestao).");
                 }
-
-                // --- 4. GERAÇÃO E SALVAMENTO NO CACHE ---
-                relatorio = await generateRelatorioFromAI(dashboardData, tipoNivel);
-
-                // --- 4️⃣ GERAÇÃO E SALVAMENTO NO CACHE ---
-                const { linkPDF } = await generateRelatorioFromAI(dashboardData, tipoNivel);
-
-                // Salva no cache (Incluindo ID da Turma)
-                await relatoriosDAO.insertRelatorioCache({
-                        idChave,
-                        tipoNivel,
-                        tipoRelatorio: "frequência",
-                        idMateria: Number(finalIdMateria),
-                        idSemestre: Number(finalIdSemestre),
-                        idTurma: cacheIdTurma, // Novo campo para Professor/Gestão
-                        link: linkPDF
-                });
-
+                if (!finalIdTurma) {
+                    throw new Error("ID da Turma ausente no JSON de desempenho (desempenho[0].turma.id_turma) para a Gestão.");
+                }
+            } else {
+                throw new Error(`'tipoNivel' desconhecido ou não implementado: ${tipoNivel}`);
+            }
+            // --- FIM DA LÓGICA DE EXTRAÇÃO ---
+    
+            // --- 2. VERIFICAÇÃO E EXTRAÇÃO DE idMateria/idSemestre ---
+            console.log(">>> Antes da conversão:", idMateria, idSemestre);
+            let finalIdMateria = Number(idMateria);
+            let finalIdSemestre = Number(idSemestre);
+            console.log(">>> Depois da conversão:", finalIdMateria, finalIdSemestre);
+            
+    
+            if (tipoNivel === 'professor' && !finalIdMateria) {
+                const materiaIdFromData = firstItem?.materia?.materia_id;
+                if (materiaIdFromData) {
+                    finalIdMateria = materiaIdFromData;
+                }
+            }
+    
+            if (tipoNivel === 'gestao' && !finalIdMateria) {
+                const materiaIdFromData = firstItem?.materia?.id_materia;
+                if (materiaIdFromData) {
+                    finalIdMateria = materiaIdFromData;
+                }
+            }
+    
+            if (!finalIdMateria || !finalIdSemestre) {
+                console.error("ERRO: finalIdMateria ou finalIdSemestre ausente");
+                console.error({ finalIdMateria, finalIdSemestre });
+                throw new Error("Os IDs de Matéria e/ou Semestre são obrigatórios e devem ser passados como parâmetros.");
+            }
+    
+            // --- 3. TENTA BUSCAR NO CACHE ---
+            const cacheIdTurma = (tipoNivel === 'professor' || tipoNivel === 'gestao') ? Number(finalIdTurma) : undefined;
+    
+    
+            let relatorioCache = await relatoriosDAO.findRelatorioCache(
+                idChave,
+                tipoNivel,
+                tipoRelatorio,
+                Number(finalIdMateria),
+                Number(finalIdSemestre),
+                cacheIdTurma
+            );
+    
+            if (relatorioCache) {
+                console.log("Analytica AI: Relatório encontrado no cache.");
                 return {
-                        status_code: 200,
-                        message: message.SUCCESS_CREATED_ITEM.message,
-                        relatorio: {
-                                link: linkPDF
-                        }
+                    status_code: 200,
+                    message: message.SUCCESS_CREATED_ITEM.message,
+                    relatorio: {
+                        link: relatorioCache.link
+                    }
                 };
-
+            }
+    
+            // --- 4. GERAÇÃO E SALVAMENTO NO CACHE (CORRIGIDO) ---
+            // Aqui, generateRelatorioFromAI gera o Markdown, o PDF e retorna o link
+            const { linkPDF, conteudoMarkdown } = await generateRelatorioFromAI(dashboardData, tipoNivel, idMateria, idSemestre);
+    
+            // Garante que o link é válido antes de salvar no cache (previne o erro .replace())
+            if (!linkPDF || typeof linkPDF !== 'string') {
+                 throw new Error("Link do PDF não foi gerado corretamente. Não será possível salvar no cache.");
+            }
+    
+            // Salva no cache
+            await relatoriosDAO.insertRelatorioCache({
+                idChave,
+                tipoNivel,
+                tipoRelatorio: "frequência",
+                idMateria: Number(finalIdMateria),
+                idSemestre: Number(finalIdSemestre),
+                idTurma: cacheIdTurma,
+                link: linkPDF,
+                // Adicionando o conteúdo Markdown bruto (opcional)
+                conteudo: conteudoMarkdown 
+            });
+    
+            return {
+                status_code: 200,
+                message: message.SUCCESS_CREATED_ITEM.message,
+                relatorio: {
+                    link: linkPDF
+                }
+            };
+    
         } catch (error) {
-                console.error("[Controller] Erro FATAL:", error);
-                return {
-                        status_code: 500,
-                        message: "Devido a erros internos no servidor da CONTROLLER, não foi possivel processar a requisição!!!",
-                        relatorio: {
-                                titulo: "Análise Indisponível",
-                                conteudo: "O serviço de IA não pôde processar a análise no momento. Detalhes: " + (error.message || "Erro desconhecido.")
-                        }
-                };
+            console.error("[Controller] Erro FATAL:", error);
+            return {
+                status_code: 500,
+                message: "Devido a erros internos no servidor da CONTROLLER, não foi possivel processar a requisição!!!",
+                relatorio: {
+                    titulo: "Análise Indisponível",
+                    conteudo: "O serviço de IA não pôde processar a análise no momento. Detalhes: " + (error.message || "Erro desconhecido.")
+                }
+            }
         }
-};
+}
 
 module.exports = {
         generateRelatorioFromAI,

@@ -67,16 +67,21 @@ const findRelatorioCache = async function (idChave, tipoNivel, tipoRelatorio, id
 const insertRelatorioCache = async function (relatorioData) {
     try {
         let idAluno = null, idProfessor = null, idGestao = null;
-        let idTurma = relatorioData.idTurma || null;
-
+        let idTurma = relatorioData.idTurma || null; 
+        
         if (relatorioData.tipoNivel === 'aluno') idAluno = relatorioData.idChave;
         else if (relatorioData.tipoNivel === 'professor') idProfessor = relatorioData.idChave;
         else if (relatorioData.tipoNivel === 'gestao') idGestao = relatorioData.idChave;
         else {
-            console.error("[DAO] Tentativa de inserir relatótio com Tipo Inválido:", relatorioData.tipoNivel);
-            return false;
+             console.error("[DAO] Tentativa de inserir relatótio com Tipo Inválido:", relatorioData.tipoNivel);
+             return false;
         }
 
+        let idAlunoSQL = idAluno !== null ? idAluno : 'NULL';
+        let idProfessorSQL = idProfessor !== null ? idProfessor : 'NULL';
+        let idGestaoSQL = idGestao !== null ? idGestao : 'NULL';
+        let idTurmaSQL = idTurma !== null ? idTurma : 'NULL'; // Aplica o mesmo para idTurma
+        console.log("CACHE DEBUG:", { idProfessorSQL });
         const result = await prisma.$executeRawUnsafe(`
             INSERT INTO tbl_relatorio (
                 link,
@@ -94,15 +99,15 @@ const insertRelatorioCache = async function (relatorioData) {
                 NOW(),
                 '${relatorioData.tipoRelatorio}',
                 '${relatorioData.tipoNivel}',
-                ${idAluno},
-                ${idProfessor},
-                ${idGestao},
+                ${idAlunoSQL},        
+                ${idProfessorSQL},  
+                ${idGestaoSQL},
                 ${relatorioData.idMateria},
-                ${idTurma},
+                ${idTurmaSQL},
                 ${relatorioData.idSemestre}
             );
         `);
-
+        console.log("CACHE DEBUG:", { idProfessorSQL});
         return result === 1;
 
     } catch (error) {

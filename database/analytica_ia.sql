@@ -1513,11 +1513,6 @@ DELIMITER ;
 
 select * from tbl_aluno;
 
-CALL sp_get_ranking_aluno(11, 4, 1);
-
-CALL sp_get_ranking_professor(3, 3, 4, 1);
-
-CALL sp_get_ranking_gestao(1, 3, 4, 2);
 
 -- =================================================================
 -- INSERÇÃO DE DADOS ADICIONAIS PARA TESTE DE RANKING

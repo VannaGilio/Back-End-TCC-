@@ -76,4 +76,6 @@ async function gerarPDF(markdown, nomeBase = 'relatorio') {
   }
 }
 
-module.exports = gerarPDF;
+module.exports = {
+  gerarPDF
+}

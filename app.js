@@ -12,6 +12,7 @@
    npm install openai
    npm install moment
    npm install dotenv
+   npm install puppeteer marked
 */
 
 const express = require('express')
@@ -624,6 +625,7 @@ app.post('/v1/analytica-ai/relatorios/aluno', async function (request, response)
         const result = await relatorioController.getRelatorio(
             body,
             'aluno',              // tipoNivel
+            'frequência',         // tipoRelatorio (ou o tipo real que quiser)
             String(idSemestre),
             String(idMateria)
         );

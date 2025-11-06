@@ -227,6 +227,16 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                         conteudo: insight.conteudo
                 });
 
+                const data = new Date();
+
+                const dataFormatada = data.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                });
+
+                insight.data = dataFormatada
+
                 return {
                         status_code: 200,
                         message: message.SUCCESS_CREATED_ITEM.message,

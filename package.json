@@ -10,6 +10,6 @@
     "nodemailer": "^7.0.9",
     "openai": "^6.8.1",
     "prisma": "^6.17.1",
-    "puppeteer": "^24.29.0"
+    "puppeteer": "^24.29.1"
   }
 }

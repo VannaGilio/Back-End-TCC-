@@ -193,8 +193,8 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                         cacheIdTurma // Novo parâmetro para Professor/Gestão
                 );
 
-        if (insight) {
-            console.log("Analytica AI: Insight encontrado no cache.")
+        if (insight) {
+        console.log("Analytica AI: Insight encontrado no cache.")
 
             const data = insight.data_geracao
             const dataFormatada = data.toLocaleDateString("pt-BR", {
@@ -202,16 +202,16 @@ const getInsight = async (dashboardData, tipoInsight, idSemestre, idMateria) => 
                 month: "2-digit",
                 year: "numeric",
             });
-            return {
-                status_code: 200,
-                message: message.SUCCESS_CREATED_ITEM.message,
-                insight: {
-                    titulo: insight.titulo,
-                    conteudo: insight.conteudo,
-                    data: dataFormatada,
-                }
-            };
-        }
+return {
+ status_code: 200,
+ message: message.SUCCESS_CREATED_ITEM.message,
+ insight: {
+titulo: insight.titulo,
+conteudo: insight.conteudo,
+data: dataFormatada,
+ }
+};
+}
 
                 // --- 4. GERAÇÃO E SALVAMENTO NO CACHE ---
                 insight = await generateInsightFromAI(dashboardData, tipoInsight);

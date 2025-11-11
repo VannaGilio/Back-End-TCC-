@@ -798,12 +798,115 @@ app.post('/v1/analytica-ai/relatorios-desempenho/gestao', async function (reques
             'gestao',              // tipoNivel
             'desempenho',         // tipoRelatorio (ou o tipo real que quiser)
             String(idSemestre),
-            String(idTurma)
+            String(idTurma),
+            String(idMateria)
         );
 
         response.status(result.status_code).json(result)
     } catch (error) {
         console.error("Erro na rota /relatorios-desempenho/professor:", error)
+        response.status(500).json({
+            status_code: 500,
+            message: "Erro interno ao gerar relatório."
+        })
+    }
+})
+
+const relatorioCompletoController = require('./controller/relatorios/controllerRelatorioCompleto.js');
+
+app.post('/v1/analytica-ai/relatorios-completo/aluno', async function (request, response) {
+    const body = request.body
+    const idSemestre = request.query.semestre
+    const idMateria= request.query.materia
+
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA)
+    }
+
+    if (!idSemestre || !idMateria) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS)
+    }
+
+    try {
+        const result = await relatorioCompletoController.getRelatorioCompleto(
+            body,
+            'aluno',              // tipoNivel
+            'completo',         // tipoRelatorio (ou o tipo real que quiser)
+            String(idSemestre),
+            String(idMateria)
+        );
+
+        response.status(result.status_code).json(result)
+    } catch (error) {
+        console.error("Erro na rota /relatorios-completo/aluno:", error)
+        response.status(500).json({
+            status_code: 500,
+            message: "Erro interno ao gerar relatório."
+        })
+    }
+})
+
+app.post('/v1/analytica-ai/relatorios-completo/professor', async function (request, response) {
+    const body = request.body
+    const idSemestre = request.query.semestre
+    const idTurma= request.query.turma
+
+
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA)
+    }
+
+    if (!idTurma || !idSemestre) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS)
+    }
+
+    try {
+        const result = await relatorioCompletoController.getRelatorioCompleto(
+            body,
+            'professor',              // tipoNivel
+            'completo',         // tipoRelatorio (ou o tipo real que quiser)
+            String(idSemestre),
+            String(idTurma)
+        );
+
+        response.status(result.status_code).json(result)
+    } catch (error) {
+        console.error("Erro na rota /relatorios-completo/profesor:", error)
+        response.status(500).json({
+            status_code: 500,
+            message: "Erro interno ao gerar relatório."
+        })
+    }
+})
+
+app.post('/v1/analytica-ai/relatorios-completo/gestao', async function (request, response) {
+    const body = request.body
+    const idSemestre = request.query.semestre
+    const idTurma = request.query.turma
+    const idMateria = request.query.materia
+
+
+    if (!body || !body.desempenho) {
+        return response.status(400).json(message.ERROR_NO_DATA)
+    }
+
+    if (!idMateria || !idTurma || !idSemestre) {
+        return response.status(400).json(message.ERROR_MISSING_CACHE_PARAMS)
+    }
+
+    try {
+        const result = await relatorioCompletoController.getRelatorioCompleto(
+            body,
+            'gestao',
+            'completo',
+            String(idSemestre),
+            String(idTurma),
+            String(idMateria)
+        );
+
+        response.status(result.status_code).json(result)
+    } catch (error) {
+        console.error("Erro na rota /relatorios-completo/profesor:", error)
         response.status(500).json({
             status_code: 500,
             message: "Erro interno ao gerar relatório."

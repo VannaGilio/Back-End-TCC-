@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "start": "node app.js",
+    "postinstall": "prisma generate"
+  },
+
   "dependencies": {
     "@prisma/client": "^6.17.1",
     "body-parser": "^2.2.0",
@@ -10,6 +15,6 @@
     "nodemailer": "^7.0.9",
     "openai": "^6.8.1",
     "prisma": "^6.17.1",
-    "puppeteer": "^24.29.1"
+    "puppeteer": "^24.30.0"
   }
 }

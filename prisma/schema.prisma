@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,297 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model tbl_aluno {
+  id_aluno            Int                   @id @default(autoincrement())
+  nome                String                @db.VarChar(80)
+  data_nascimento     DateTime?             @db.Date
+  matricula           String?               @unique(map: "matricula") @db.VarChar(45)
+  telefone            String?               @db.VarChar(20)
+  email               String                @db.VarChar(45)
+  id_usuario          Int
+  id_turma            Int
+  tbl_turma           tbl_turma             @relation(fields: [id_turma], references: [id_turma], onDelete: Cascade, onUpdate: NoAction, map: "fk_aluno_turma")
+  tbl_usuarios        tbl_usuarios          @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_aluno_usuario")
+  tbl_atividade_aluno tbl_atividade_aluno[]
+  tbl_frequencia      tbl_frequencia[]
+  tbl_insights        tbl_insights[]
+  tbl_observacao      tbl_observacao[]
+  tbl_recurso_aluno   tbl_recurso_aluno[]
+  tbl_relatorio       tbl_relatorio[]
+
+  @@index([id_turma], map: "fk_aluno_turma")
+  @@index([id_usuario], map: "fk_aluno_usuario")
+}
+
+model tbl_atividade {
+  id_atividade        Int                   @id @default(autoincrement())
+  titulo              String                @db.VarChar(45)
+  descricao           String?               @db.VarChar(255)
+  data_criacao        DateTime              @db.Date
+  id_materia          Int
+  id_professor        Int
+  id_categoria        Int
+  tbl_categoria       tbl_categoria         @relation(fields: [id_categoria], references: [id_categoria], onDelete: Cascade, onUpdate: NoAction, map: "fk_atividade_categoria")
+  tbl_materia         tbl_materia           @relation(fields: [id_materia], references: [id_materia], onDelete: Cascade, onUpdate: NoAction, map: "fk_atividade_materia")
+  tbl_professor       tbl_professor         @relation(fields: [id_professor], references: [id_professor], onDelete: Cascade, onUpdate: NoAction, map: "fk_atividade_professor")
+  tbl_atividade_aluno tbl_atividade_aluno[]
+  tbl_observacao      tbl_observacao[]
+
+  @@index([id_categoria], map: "fk_atividade_categoria")
+  @@index([id_materia], map: "fk_atividade_materia")
+  @@index([id_professor], map: "fk_atividade_professor")
+}
+
+model tbl_atividade_aluno {
+  id_atividade_aluno Int           @id @default(autoincrement())
+  id_atividade       Int
+  id_aluno           Int
+  tbl_aluno          tbl_aluno     @relation(fields: [id_aluno], references: [id_aluno], onDelete: Cascade, onUpdate: NoAction, map: "fk_atividade_aluno_aluno")
+  tbl_atividade      tbl_atividade @relation(fields: [id_atividade], references: [id_atividade], onDelete: Cascade, onUpdate: NoAction, map: "fk_atividade_aluno_atividade")
+  tbl_nota           tbl_nota[]
+
+  @@index([id_aluno], map: "fk_atividade_aluno_aluno")
+  @@index([id_atividade], map: "fk_atividade_aluno_atividade")
+}
+
+model tbl_categoria {
+  id_categoria  Int             @id @default(autoincrement())
+  categoria     String          @db.VarChar(45)
+  tbl_atividade tbl_atividade[]
+}
+
+model tbl_frequencia {
+  id_frequencia   Int           @id @default(autoincrement())
+  presenca        Boolean
+  data_frequencia DateTime?     @db.Date
+  id_aluno        Int
+  id_materia      Int
+  id_semestre     Int?
+  tbl_aluno       tbl_aluno     @relation(fields: [id_aluno], references: [id_aluno], onDelete: Cascade, onUpdate: NoAction, map: "fk_frequencia_aluno")
+  tbl_materia     tbl_materia   @relation(fields: [id_materia], references: [id_materia], onDelete: Cascade, onUpdate: NoAction, map: "fk_frequencia_materia")
+  tbl_semestre    tbl_semestre? @relation(fields: [id_semestre], references: [id_semestre], onUpdate: NoAction, map: "fk_frequencia_semestre")
+
+  @@index([id_aluno], map: "fk_frequencia_aluno")
+  @@index([id_materia], map: "fk_frequencia_materia")
+  @@index([id_semestre], map: "fk_frequencia_semestre")
+}
+
+model tbl_gestao {
+  id_gestao        Int                @id @default(autoincrement())
+  nome             String             @db.VarChar(80)
+  telefone         String             @db.VarChar(20)
+  email            String             @db.VarChar(45)
+  id_usuario       Int
+  tbl_usuarios     tbl_usuarios       @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_gestao_usuario")
+  tbl_gestao_turma tbl_gestao_turma[]
+  tbl_insights     tbl_insights[]
+  tbl_relatorio    tbl_relatorio[]
+
+  @@index([id_usuario], map: "fk_gestao_usuario")
+}
+
+model tbl_gestao_turma {
+  id_gestao_turma Int        @id @default(autoincrement())
+  id_gestao       Int
+  id_turma        Int
+  tbl_gestao      tbl_gestao @relation(fields: [id_gestao], references: [id_gestao], onDelete: Cascade, onUpdate: NoAction, map: "fk_gestao_turma")
+  tbl_turma       tbl_turma  @relation(fields: [id_turma], references: [id_turma], onDelete: Cascade, onUpdate: NoAction, map: "fk_turma_gestao")
+
+  @@index([id_gestao], map: "fk_gestao_turma")
+  @@index([id_turma], map: "fk_turma_gestao")
+}
+
+model tbl_insights {
+  id_insights   Int            @id @default(autoincrement())
+  data_geracao  DateTime       @db.DateTime(0)
+  tipo_insight  String         @db.VarChar(50)
+  titulo        String         @db.VarChar(255)
+  conteudo      String         @db.Text
+  id_materia    Int
+  id_semestre   Int
+  id_aluno      Int?
+  id_professor  Int?
+  id_gestao     Int?
+  id_turma      Int?
+  tbl_aluno     tbl_aluno?     @relation(fields: [id_aluno], references: [id_aluno], onDelete: NoAction, onUpdate: NoAction, map: "fk_insights_aluno")
+  tbl_gestao    tbl_gestao?    @relation(fields: [id_gestao], references: [id_gestao], onDelete: NoAction, onUpdate: NoAction, map: "fk_insights_gestao")
+  tbl_materia   tbl_materia    @relation(fields: [id_materia], references: [id_materia], onDelete: NoAction, onUpdate: NoAction, map: "fk_insights_materia")
+  tbl_professor tbl_professor? @relation(fields: [id_professor], references: [id_professor], onDelete: NoAction, onUpdate: NoAction, map: "fk_insights_professor")
+  tbl_semestre  tbl_semestre   @relation(fields: [id_semestre], references: [id_semestre], onDelete: NoAction, onUpdate: NoAction, map: "fk_insights_semestre")
+  tbl_turma     tbl_turma?     @relation(fields: [id_turma], references: [id_turma], onDelete: NoAction, onUpdate: NoAction, map: "fk_insights_turma")
+
+  @@index([id_aluno], map: "fk_insights_aluno")
+  @@index([id_gestao], map: "fk_insights_gestao")
+  @@index([id_materia], map: "fk_insights_materia")
+  @@index([id_professor], map: "fk_insights_professor")
+  @@index([id_semestre], map: "fk_insights_semestre")
+  @@index([id_turma], map: "fk_insights_turma")
+}
+
+model tbl_materia {
+  id_materia     Int              @id @default(autoincrement())
+  materia        String           @db.VarChar(45)
+  cor_materia    String?          @db.VarChar(45)
+  tbl_atividade  tbl_atividade[]
+  tbl_frequencia tbl_frequencia[]
+  tbl_insights   tbl_insights[]
+  tbl_recursos   tbl_recursos[]
+  tbl_relatorio  tbl_relatorio[]
+}
+
+model tbl_nota {
+  id_nota             Int                 @id @default(autoincrement())
+  nota                Decimal?            @db.Decimal(5, 2)
+  id_atividade_aluno  Int
+  id_semestre         Int
+  tbl_atividade_aluno tbl_atividade_aluno @relation(fields: [id_atividade_aluno], references: [id_atividade_aluno], onDelete: Cascade, onUpdate: NoAction, map: "fk_nota_atividade_aluno")
+  tbl_semestre        tbl_semestre        @relation(fields: [id_semestre], references: [id_semestre], onDelete: Cascade, onUpdate: NoAction, map: "fk_nota_semestre")
+
+  @@index([id_atividade_aluno], map: "fk_nota_atividade_aluno")
+  @@index([id_semestre], map: "fk_nota_semestre")
+}
+
+model tbl_observacao {
+  id_observacao Int            @id @default(autoincrement())
+  descricao     String?        @db.VarChar(500)
+  id_atividade  Int?
+  id_aluno      Int
+  tbl_aluno     tbl_aluno      @relation(fields: [id_aluno], references: [id_aluno], onDelete: Cascade, onUpdate: NoAction, map: "fk_observacao_aluno")
+  tbl_atividade tbl_atividade? @relation(fields: [id_atividade], references: [id_atividade], onDelete: Cascade, onUpdate: NoAction, map: "fk_observacao_atividade")
+
+  @@index([id_aluno], map: "fk_observacao_aluno")
+  @@index([id_atividade], map: "fk_observacao_atividade")
+}
+
+model tbl_professor {
+  id_professor        Int                   @id @default(autoincrement())
+  nome                String                @db.VarChar(80)
+  data_nascimento     DateTime?             @db.Date
+  telefone            String?               @db.VarChar(20)
+  email               String                @db.VarChar(60)
+  id_usuario          Int
+  tbl_atividade       tbl_atividade[]
+  tbl_insights        tbl_insights[]
+  tbl_usuarios        tbl_usuarios          @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_professor_usuario")
+  tbl_recursos        tbl_recursos[]
+  tbl_relatorio       tbl_relatorio[]
+  tbl_turma_professor tbl_turma_professor[]
+
+  @@index([id_usuario], map: "fk_professor_usuario")
+}
+
+model tbl_recurso_aluno {
+  id_recursos_aluno Int          @id @default(autoincrement())
+  id_recursos       Int
+  id_aluno          Int
+  tbl_aluno         tbl_aluno    @relation(fields: [id_aluno], references: [id_aluno], onDelete: Cascade, onUpdate: NoAction, map: "fk_recurso_aluno_aluno")
+  tbl_recursos      tbl_recursos @relation(fields: [id_recursos], references: [id_recursos], onDelete: Cascade, onUpdate: NoAction, map: "fk_recurso_aluno_recurso")
+
+  @@index([id_aluno], map: "fk_recurso_aluno_aluno")
+  @@index([id_recursos], map: "fk_recurso_aluno_recurso")
+}
+
+model tbl_recursos {
+  id_recursos       Int                 @id @default(autoincrement())
+  titulo            String?             @db.VarChar(45)
+  descricao         String?             @db.VarChar(255)
+  data_criacao      DateTime            @db.Date
+  id_materia        Int
+  id_professor      Int
+  tbl_recurso_aluno tbl_recurso_aluno[]
+  tbl_materia       tbl_materia         @relation(fields: [id_materia], references: [id_materia], onDelete: Cascade, onUpdate: NoAction, map: "fk_recursos_materia")
+  tbl_professor     tbl_professor       @relation(fields: [id_professor], references: [id_professor], onDelete: Cascade, onUpdate: NoAction, map: "fk_recursos_professor")
+
+  @@index([id_materia], map: "fk_recursos_materia")
+  @@index([id_professor], map: "fk_recursos_professor")
+}
+
+model tbl_relatorio {
+  id_relatorio   Int            @id @default(autoincrement())
+  link           String         @db.Text
+  data_geracao   DateTime       @db.DateTime(0)
+  tipo_relatorio String         @db.VarChar(40)
+  tipo_nivel     String         @db.VarChar(50)
+  id_aluno       Int?
+  id_professor   Int?
+  id_gestao      Int?
+  id_materia     Int
+  id_turma       Int?
+  id_semestre    Int
+  tbl_aluno      tbl_aluno?     @relation(fields: [id_aluno], references: [id_aluno], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_aluno")
+  tbl_gestao     tbl_gestao?    @relation(fields: [id_gestao], references: [id_gestao], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_gestao")
+  tbl_materia    tbl_materia    @relation(fields: [id_materia], references: [id_materia], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_materia")
+  tbl_professor  tbl_professor? @relation(fields: [id_professor], references: [id_professor], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_professor")
+  tbl_semestre   tbl_semestre   @relation(fields: [id_semestre], references: [id_semestre], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_semestre")
+  tbl_turma      tbl_turma?     @relation(fields: [id_turma], references: [id_turma], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_turma")
+
+  @@index([id_aluno], map: "fk_relatorio_aluno")
+  @@index([id_gestao], map: "fk_relatorio_gestao")
+  @@index([id_materia], map: "fk_relatorio_materia")
+  @@index([id_professor], map: "fk_relatorio_professor")
+  @@index([id_semestre], map: "fk_relatorio_semestre")
+  @@index([id_turma], map: "fk_relatorio_turma")
+}
+
+model tbl_semestre {
+  id_semestre        Int                  @id @default(autoincrement())
+  semestre           String               @db.VarChar(45)
+  tbl_frequencia     tbl_frequencia[]
+  tbl_insights       tbl_insights[]
+  tbl_nota           tbl_nota[]
+  tbl_relatorio      tbl_relatorio[]
+  tbl_semestre_turma tbl_semestre_turma[]
+}
+
+model tbl_semestre_turma {
+  id_semestre_turma Int          @id @default(autoincrement())
+  id_turma          Int
+  id_semestre       Int
+  tbl_semestre      tbl_semestre @relation(fields: [id_semestre], references: [id_semestre], onDelete: Cascade, onUpdate: NoAction, map: "fk_semestre_turma_semestre")
+  tbl_turma         tbl_turma    @relation(fields: [id_turma], references: [id_turma], onDelete: Cascade, onUpdate: NoAction, map: "fk_semestre_turma_turma")
+
+  @@index([id_semestre], map: "fk_semestre_turma_semestre")
+  @@index([id_turma], map: "fk_semestre_turma_turma")
+}
+
+model tbl_turma {
+  id_turma            Int                   @id @default(autoincrement())
+  turma               String                @db.VarChar(45)
+  tbl_aluno           tbl_aluno[]
+  tbl_gestao_turma    tbl_gestao_turma[]
+  tbl_insights        tbl_insights[]
+  tbl_relatorio       tbl_relatorio[]
+  tbl_semestre_turma  tbl_semestre_turma[]
+  tbl_turma_professor tbl_turma_professor[]
+}
+
+model tbl_turma_professor {
+  id_turma_professor Int           @id @default(autoincrement())
+  id_professor       Int
+  id_turma           Int
+  tbl_professor      tbl_professor @relation(fields: [id_professor], references: [id_professor], onDelete: Cascade, onUpdate: NoAction, map: "fk_turma_professor_professor")
+  tbl_turma          tbl_turma     @relation(fields: [id_turma], references: [id_turma], onDelete: Cascade, onUpdate: NoAction, map: "fk_turma_professor_turma")
+
+  @@index([id_professor], map: "fk_turma_professor_professor")
+  @@index([id_turma], map: "fk_turma_professor_turma")
+}
+
+model tbl_usuarios {
+  id_usuario        Int                        @id @default(autoincrement())
+  credencial        String                     @unique(map: "credencial") @db.VarChar(11)
+  senha             String                     @db.VarChar(20)
+  token_recuperacao String?                    @db.VarChar(255)
+  expiracao_token   DateTime?                  @db.DateTime(0)
+  nivel_usuario     tbl_usuarios_nivel_usuario
+  tbl_aluno         tbl_aluno[]
+  tbl_gestao        tbl_gestao[]
+  tbl_professor     tbl_professor[]
+}
+
+enum tbl_usuarios_nivel_usuario {
+  aluno
+  professor
+  gest_o    @map("gestão")
 }

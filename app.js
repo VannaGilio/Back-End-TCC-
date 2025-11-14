@@ -340,6 +340,59 @@ app.put('/v1/analytica-ai/atividade/:id', async function (request, response) {
     response.json(result)
 })
 
+/*********RECURSOS*********/
+
+const controllerRecursos= require('./controller/atividade/controllerRecursos.js')
+
+app.post('/v1/analytica-ai/recurso', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    let result = await controllerRecursos.inserirRecurso(body, contentType)
+    
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/recurso', async function (request, response){
+    let result = await controllerRecursos.listarRecursos()
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/recurso/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerRecursos.buscarRecursoPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.delete('/v1/analytica-ai/recurso/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerRecursos.excluirRecursoPorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.put('/v1/analytica-ai/recurso/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerRecursos.atualizarRecursoPorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+
 /*********MATERIA*********/
 
 const controllerMateria= require('./controller/materia/controllerMateria.js')

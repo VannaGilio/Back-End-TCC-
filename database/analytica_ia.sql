@@ -1679,3 +1679,40 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+--PROCEDURE RECURSOS
+
+DELIMITER $$
+
+CREATE PROCEDURE sp_inserir_recurso (
+    IN p_titulo VARCHAR(45),
+    IN p_descricao VARCHAR(255),
+    IN p_data_criacao DATE,
+    IN p_id_materia INT,
+    IN p_id_professor INT
+)
+BEGIN
+    INSERT INTO tbl_recursos (
+        titulo, descricao, data_criacao, id_materia, id_professor
+    ) VALUES (
+        p_titulo, p_descricao, p_data_criacao, p_id_materia, p_id_professor
+    );
+END $$
+
+DELIMITER ;
+
+--VIEW RECURSOS
+CREATE VIEW vw_buscar_recursos AS
+SELECT 
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.data_criacao,
+    r.id_materia,
+    m.materia AS materia,
+    r.id_professor,
+    p.nome AS nome
+FROM 
+    tbl_recursos r
+    INNER JOIN tbl_materia m ON r.id_materia = m.id_materia
+    INNER JOIN tbl_professor p ON r.id_professor = p.id_professor;

@@ -914,6 +914,8 @@ app.post('/v1/analytica-ai/relatorios-completo/gestao', async function (request,
     }
 })
 
-app.listen('8080', function(){
-    console.log('API funcionando...')
-})
+const port = process.env.PORT || 8080;
+
+app.listen(port, () => {
+    console.log('API funcionando na porta ' + port);
+});

@@ -287,6 +287,59 @@ app.put('/v1/analytica-ai/turma/:id', async function (request, response) {
     response.json(result)
 })
 
+
+/*********ATIVIDADES*********/
+
+const controllerAtividades= require('./controller/atividade/controllerAtividade.js')
+
+app.post('/v1/analytica-ai/atividade', async function (request, response){
+    let contentType = request.headers['content-type']
+    let body =  request.body
+
+    let result = await controllerAtividades.inserirAtividade(body, contentType)
+    
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/atividade', async function (request, response){
+    let result = await controllerAtividades.listarAtividades()
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/atividade/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerAtividades.buscarAtividadePorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.delete('/v1/analytica-ai/atividade/:id', async function (request, response){
+    let id = request.params.id
+
+    let result = await controllerAtividades.excluirAtividadePorId(id)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.put('/v1/analytica-ai/atividade/:id', async function (request, response) {
+    let contentType = request.headers['content-type']
+
+    let id = request.params.id
+
+    let dadosBody = request.body
+
+    let result = await controllerAtividades.atualizarAtividadePorId(id, dadosBody, contentType)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 /*********MATERIA*********/
 
 const controllerMateria= require('./controller/materia/controllerMateria.js')
@@ -914,8 +967,11 @@ app.post('/v1/analytica-ai/relatorios-completo/gestao', async function (request,
     }
 })
 
-const port = process.env.PORT || 8080;
+// const port = process.env.PORT || 8080;
 
-app.listen(port, () => {
-    console.log('API funcionando na porta ' + port);
-});
+// app.listen(port, () => {
+//     console.log('API funcionando na porta ' + port);
+// });
+app.listen('8080', function(){
+    console.log('API funcionando...')
+})

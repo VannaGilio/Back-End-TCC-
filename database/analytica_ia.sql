@@ -1638,3 +1638,44 @@ INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (7.5, LAST_I
 -- Sofia Almeida (ID_ALUNO = 21)
 INSERT INTO tbl_atividade_aluno (id_atividade, id_aluno) VALUES (1, 21), (2, 21);
 INSERT INTO tbl_nota (nota, id_atividade_aluno, id_semestre) VALUES (5.0, LAST_INSERT_ID()-1, 1), (5.5, LAST_INSERT_ID(), 1);
+
+--VIEW ATIVIDADES
+DROP VIEW IF EXISTS vw_buscar_atividades
+CREATE VIEW vw_buscar_atividades AS
+SELECT 
+    a.id_atividade,
+    a.titulo,
+    a.descricao,
+    a.data_criacao,
+    a.id_materia,
+    m.materia AS materia,
+    a.id_professor,
+    p.nome AS nome,
+    a.id_categoria,
+    c.categoria AS categoria
+FROM 
+    tbl_atividade a
+    INNER JOIN tbl_materia m ON a.id_materia = m.id_materia
+    INNER JOIN tbl_professor p ON a.id_professor = p.id_professor
+    INNER JOIN tbl_categoria c ON a.id_categoria = c.id_categoria;
+
+--PROCEDURE ATIVIDADES 
+DELIMITER $$
+
+CREATE PROCEDURE sp_inserir_atividade(
+    IN p_titulo VARCHAR(45),
+    IN p_descricao VARCHAR(255),
+    IN p_data_criacao DATE,
+    IN p_id_materia INT,
+    IN p_id_professor INT,
+    IN p_id_categoria INT
+)
+BEGIN
+    INSERT INTO tbl_atividade (
+        titulo, descricao, data_criacao, id_materia, id_professor, id_categoria
+    ) VALUES (
+        p_titulo, p_descricao, p_data_criacao, p_id_materia, p_id_professor, p_id_categoria
+    );
+END $$
+
+DELIMITER ;

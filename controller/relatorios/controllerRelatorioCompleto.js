@@ -531,7 +531,7 @@ const getRelatorioCompleto = async (dashboardData, tipoNivel, tipoRelatorio, idS
         await relatoriosDAO.insertRelatorioCache({
             idChave,
             tipoNivel,
-            tipoRelatorio: "desempenho",
+            tipoRelatorio: "completo",
             idMateria: Number(finalIdMateria),
             idSemestre: Number(finalIdSemestre),
             idTurma: cacheIdTurma,

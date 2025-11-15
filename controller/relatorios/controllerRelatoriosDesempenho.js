@@ -337,11 +337,13 @@ const getRelatorio = async (dashboardData, tipoNivel, tipoRelatorio, idSemestre,
 
         if (relatorioCache) {
             console.log("Analytica AI: Relatório encontrado no cache.");
+            const hoje = new Date(relatorioCache.data_geracao).toISOString().split('T')[0];
             return {
                 status_code: 200,
                 message: message.SUCCESS_CREATED_ITEM.message,
                 relatorio: {
-                    link: relatorioCache.link
+                    link: relatorioCache.link,
+                    data: hoje
                 }
             };
         }
@@ -368,11 +370,14 @@ const getRelatorio = async (dashboardData, tipoNivel, tipoRelatorio, idSemestre,
             conteudo: conteudoMarkdown
         });
 
+        const hoje = new Date().toISOString().split('T')[0];
+
         return {
             status_code: 200,
             message: message.SUCCESS_CREATED_ITEM.message,
             relatorio: {
-                link: linkPDF
+                link: linkPDF,
+                data: hoje
             }
         };
 

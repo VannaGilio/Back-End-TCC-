@@ -8,7 +8,10 @@ const insertRecurso = async function(recurso) {
             ${recurso.descricao},
             ${recurso.data_criacao},
             ${recurso.id_materia},
-            ${recurso.id_professor}
+            ${recurso.id_professor},
+            ${recurso.id_turma},
+            ${recurso.id_semestre},
+            ${recurso.link_criterio}
         )`;
     if(result)
         return true
@@ -23,6 +26,29 @@ const selectAllRecursos = async function() {
     try {
         const result = await prisma.$queryRaw`SELECT * FROM vw_buscar_recursos`;
         return result;
+    } catch (error) {
+        return false;
+    }
+};
+
+const selectRecursosAluno = async function(idAluno, idMateria, idSemestre) {
+    try {
+        let sql = `SELECT * FROM vw_recursos_aluno WHERE id_aluno = ${idAluno}`;
+
+        if (idMateria) {
+            sql += ` AND id_materia = ${idMateria}`;
+        }
+
+        if (idSemestre) {
+            sql += ` AND id_semestre = ${idSemestre}`;
+        }
+
+        const result = await prisma.$queryRawUnsafe(sql);
+
+        if (result)
+            return result;
+        else
+            return false;
     } catch (error) {
         return false;
     }
@@ -54,7 +80,10 @@ const updateByIdRecurso = async function(recurso) {
                 descricao = ${recurso.descricao},
                 data_criacao = ${recurso.data_criacao},
                 id_materia = ${recurso.id_materia},
-                id_professor = ${recurso.id_professor}
+                id_professor = ${recurso.id_professor},
+                id_turma = ${recurso.id_turma},
+                id_semestre = ${recurso.id_semestre},
+                link_criterio = ${recurso.link_criterio}
             WHERE id_recursos = ${recurso.id_recursos}
         `;
         return result ? true : false;
@@ -66,6 +95,7 @@ const updateByIdRecurso = async function(recurso) {
 module.exports = {
     insertRecurso,
     selectAllRecursos,
+    selectRecursosAluno,
     selectByIdRecurso,
     deleteByIdRecurso,
     updateByIdRecurso

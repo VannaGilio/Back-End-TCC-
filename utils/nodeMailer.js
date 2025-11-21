@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
  */
 const sendPasswordResetEmail = async (toEmail, token) => {
     // URL de redefinição no frontend (ajuste a porta se necessário)
-    const resetUrl = `http://localhost:5173/resetar-senha?token=${token}`;
+    const resetUrl = `http://192.168.0.103:5173/resetar-senha?token=${token}`;
 
     const primaryColor = '#8B5CF6'; // Roxo da Analytica AI
     const grayText = '#4A5568';

@@ -126,9 +126,12 @@ CREATE TABLE tbl_recursos (
     id_recursos INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     titulo VARCHAR(45),
     descricao VARCHAR(255),
+    link_criterio VARCHAR(255),
     data_criacao DATE NOT NULL,
     id_materia INT NOT NULL,
     id_professor INT NOT NULL,
+    id_turma INT NOT NULL,
+    id_semestre INT NOT NULL,
     CONSTRAINT fk_recursos_materia
         FOREIGN KEY (id_materia)
         REFERENCES tbl_materia (id_materia)
@@ -136,6 +139,14 @@ CREATE TABLE tbl_recursos (
     CONSTRAINT fk_recursos_professor
         FOREIGN KEY (id_professor)
         REFERENCES tbl_professor (id_professor)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_recursos_turma
+        FOREIGN KEY (id_turma)
+        REFERENCES tbl_turma (id_turma)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_recursos_semestre
+        FOREIGN KEY (id_semestre)
+        REFERENCES tbl_semestre (id_semestre)
         ON DELETE CASCADE
 );
 
@@ -1683,36 +1694,248 @@ DELIMITER ;
 --PROCEDURE RECURSOS
 
 DELIMITER $$
-
+DROP PROCEDURE IF EXISTS sp_inserir_recurso $$
 CREATE PROCEDURE sp_inserir_recurso (
-    IN p_titulo VARCHAR(45),
-    IN p_descricao VARCHAR(255),
-    IN p_data_criacao DATE,
-    IN p_id_materia INT,
-    IN p_id_professor INT
+    IN p_titulo        VARCHAR(45),
+    IN p_descricao     VARCHAR(255),
+    IN p_data_criacao  DATE,
+    IN p_id_materia    INT,
+    IN p_id_professor  INT,
+    IN p_id_turma      INT,
+    IN p_id_semestre   INT,
+    IN p_link_criterio VARCHAR(255)
 )
 BEGIN
     INSERT INTO tbl_recursos (
-        titulo, descricao, data_criacao, id_materia, id_professor
+        titulo,
+        descricao,
+        data_criacao,
+        id_materia,
+        id_professor,
+        id_turma,
+        id_semestre,
+        link_criterio
     ) VALUES (
-        p_titulo, p_descricao, p_data_criacao, p_id_materia, p_id_professor
+        p_titulo,
+        p_descricao,
+        p_data_criacao,
+        p_id_materia,
+        p_id_professor,
+        p_id_turma,
+        p_id_semestre,
+        p_link_criterio
     );
 END $$
 
 DELIMITER ;
 
 --VIEW RECURSOS
+DROP VIEW IF EXISTS vw_buscar_recursos;
 CREATE VIEW vw_buscar_recursos AS
 SELECT 
     r.id_recursos,
     r.titulo,
     r.descricao,
+    r.link_criterio,
     r.data_criacao,
     r.id_materia,
     m.materia AS materia,
     r.id_professor,
-    p.nome AS nome
+    p.nome AS nome,
+    r.id_turma,
+    t.turma,
+    r.id_semestre,
+    s.semestre
 FROM 
     tbl_recursos r
-    INNER JOIN tbl_materia m ON r.id_materia = m.id_materia
-    INNER JOIN tbl_professor p ON r.id_professor = p.id_professor;
+    INNER JOIN tbl_materia  m ON r.id_materia   = m.id_materia
+    INNER JOIN tbl_professor p ON r.id_professor = p.id_professor
+    INNER JOIN tbl_turma    t ON r.id_turma     = t.id_turma
+    INNER JOIN tbl_semestre s ON r.id_semestre  = s.id_semestre;
+
+-- VIEW RECURSOS POR ALUNO (para filtros por aluno, matéria e semestre)
+DROP VIEW IF EXISTS vw_recursos_aluno;
+CREATE VIEW vw_recursos_aluno AS
+SELECT
+    a.id_aluno,
+    a.id_turma,
+    t.turma,
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia,
+    r.id_professor,
+    p.nome AS nome,
+    r.id_semestre,
+    s.semestre
+FROM tbl_aluno a
+JOIN tbl_turma    t ON a.id_turma   = t.id_turma
+JOIN tbl_recursos r ON r.id_turma   = t.id_turma
+JOIN tbl_materia  m ON r.id_materia = m.id_materia
+JOIN tbl_professor p ON r.id_professor = p.id_professor
+JOIN tbl_semestre s ON r.id_semestre  = s.id_semestre;
+
+INSERT INTO tbl_recursos (
+    titulo,
+    descricao,
+    link_criterio,
+    data_criacao,
+    id_materia,
+    id_professor,
+    id_turma,
+    id_semestre
+) VALUES
+-- Matemática (id_materia = 1)
+(
+    'Vídeo - Revisão de Equações do 1º Grau',
+    'Aula de revisão de equações do 1º grau com exemplos passo a passo.',
+    'https://www.youtube.com/watch?v=Z0zKBCV3U2A',
+    '2025-03-01',
+    1,  -- Matemática
+    1,  -- Professor
+    3,  -- Turma
+    1   -- Semestre
+),
+(
+    'Lista de Exercícios - Equações do 2º Grau',
+    'Lista com exercícios de equações do 2º grau para treinar para a prova.',
+    'https://www.youtube.com/watch?v=9T8A89jgeTI',
+    '2025-03-02',
+    1,
+    1,
+    3,
+    1
+),
+(
+    'Vídeo - Funções Afim e Quadrática',
+    'Vídeo explicando a diferença entre função afim e quadrática.',
+    'https://www.youtube.com/watch?v=ZKkG5YcD3SM',
+    '2025-03-03',
+    1,
+    1,
+    3,
+    2
+),
+
+-- Português (id_materia = 2)
+(
+    'Vídeo - Interpretação de Texto Narrativo',
+    'Aula sobre técnicas de interpretação de textos narrativos.',
+    'https://www.youtube.com/watch?v=PZ4pctQM4zA',
+    '2025-03-04',
+    2,  -- Português
+    2,  -- Professor
+    3,
+    1
+),
+(
+    'Critérios de Avaliação - Redação Dissertativa',
+    'Critérios de correção para redações dissertativas argumentativas.',
+    'https://www.youtube.com/watch?v=3M3JZ5d4Z0s',
+    '2025-03-05',
+    2,
+    2,
+    3,
+    2
+),
+(
+    'Vídeo - Coesão e Coerência na Redação',
+    'Explicação sobre coesão e coerência com exemplos práticos.',
+    'https://www.youtube.com/watch?v=s8hWQGz_3No',
+    '2025-03-06',
+    2,
+    2,
+    3,
+    2
+),
+
+-- História (id_materia = 3)
+(
+    'Documentário - Revolução Francesa',
+    'Documentário introdutório sobre a Revolução Francesa.',
+    'https://www.youtube.com/watch?v=E0KpG2K6Xn4',
+    '2025-03-07',
+    3,  -- História
+    3,  -- Professor
+    3,
+    1
+),
+(
+    'Vídeo - Brasil Colônia',
+    'Aula sobre o período colonial no Brasil.',
+    'https://www.youtube.com/watch?v=evqXqgRZ0Vw',
+    '2025-03-08',
+    3,
+    3,
+    3,
+    1
+),
+
+-- Geografia (id_materia = 4)
+(
+    'Vídeo - Climas do Mundo',
+    'Explicação sobre os principais tipos de clima do planeta.',
+    'https://www.youtube.com/watch?v=Ys2uDn0vZ_E',
+    '2025-03-09',
+    4,  -- Geografia
+    3,
+    3,
+    1
+),
+(
+    'Vídeo - Urbanização e Problemas Urbanos',
+    'Aula sobre urbanização, metrópoles e problemas urbanos.',
+    'https://www.youtube.com/watch?v=VgK0tZ1B2cs',
+    '2025-03-10',
+    4,
+    3,
+    3,
+    2
+),
+
+-- Ciências / Biologia (id_materia = 5)
+(
+    'Vídeo - Sistema Digestório',
+    'Vídeo aula sobre o funcionamento do sistema digestório humano.',
+    'https://www.youtube.com/watch?v=8gI5qX2FXSs',
+    '2025-03-11',
+    5,  -- Ciências/Biologia
+    2,
+    3,
+    1
+),
+(
+    'Vídeo - Cadeia Alimentar',
+    'Explicação sobre cadeias e teias alimentares com exemplos simples.',
+    'https://www.youtube.com/watch?v=K3u2aFSkD4M',
+    '2025-03-12',
+    5,
+    2,
+    3,
+    2
+),
+
+-- Inglês (id_materia = 6)
+(
+    'Vídeo - Simple Present Explicado',
+    'Aula em português explicando o uso do Simple Present no inglês.',
+    'https://www.youtube.com/watch?v=F1qOQvYg3qM',
+    '2025-03-13',
+    6,  -- Inglês
+    1,
+    3,
+    1
+),
+(
+    'Playlist - Listening para Iniciantes',
+    'Playlist com exercícios de listening para iniciantes.',
+    'https://www.youtube.com/watch?v=jL8uDJJBjMA&list=PL-listening-iniciantes',
+    '2025-03-14',
+    6,
+    1,
+    3,
+    2
+);

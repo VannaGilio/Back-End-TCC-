@@ -322,25 +322,10 @@ app.delete('/v1/analytica-ai/atividade/:id', async function (request, response){
     let id = request.params.id
 
     let result = await controllerAtividades.excluirAtividadePorId(id)
-
+    
     response.status(result.status_code)
     response.json(result)
 })
-
-app.put('/v1/analytica-ai/atividade/:id', async function (request, response) {
-    let contentType = request.headers['content-type']
-
-    let id = request.params.id
-
-    let dadosBody = request.body
-
-    let result = await controllerAtividades.atualizarAtividadePorId(id, dadosBody, contentType)
-
-    response.status(result.status_code)
-    response.json(result)
-})
-
-/*********RECURSOS*********/
 
 const controllerRecursos= require('./controller/atividade/controllerRecursos.js')
 
@@ -350,6 +335,17 @@ app.post('/v1/analytica-ai/recurso', async function (request, response){
 
     let result = await controllerRecursos.inserirRecurso(body, contentType)
     
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/recurso/aluno/:idAluno', async function (request, response){
+    let idAluno = parseInt(request.params.idAluno)
+    let idMateria = request.query.materia ? parseInt(request.query.materia) : null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre) : null
+
+    let result = await controllerRecursos.buscarRecursosAluno(idAluno, idMateria, idSemestre)
+
     response.status(result.status_code)
     response.json(result)
 })
@@ -391,7 +387,6 @@ app.put('/v1/analytica-ai/recurso/:id', async function (request, response) {
     response.status(result.status_code)
     response.json(result)
 })
-
 
 /*********MATERIA*********/
 

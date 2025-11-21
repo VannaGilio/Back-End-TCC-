@@ -22,6 +22,56 @@ const insertRecurso = async function(recurso) {
     }
 };
 
+const selectRecursosProfessor = async function(idProfessor, idTurma, idSemestre) {
+    try {
+        let sql = `SELECT * FROM vw_recursos_professor WHERE id_professor = ${idProfessor}`;
+
+        if (idTurma) {
+            sql += ` AND id_turma = ${idTurma}`;
+        }
+
+        if (idSemestre) {
+            sql += ` AND id_semestre = ${idSemestre}`;
+        }
+
+        const result = await prisma.$queryRawUnsafe(sql);
+
+        if (result)
+            return result;
+        else
+            return false;
+    } catch (error) {
+        return false;
+    }
+};
+
+const selectRecursosGestao = async function(idGestao, idTurma, idMateria, idSemestre) {
+    try {
+        let sql = `SELECT * FROM vw_recursos_gestao WHERE id_gestao = ${idGestao}`;
+
+        if (idTurma) {
+            sql += ` AND id_turma = ${idTurma}`;
+        }
+
+        if (idMateria) {
+            sql += ` AND id_materia = ${idMateria}`;
+        }
+
+        if (idSemestre) {
+            sql += ` AND id_semestre = ${idSemestre}`;
+        }
+
+        const result = await prisma.$queryRawUnsafe(sql);
+
+        if (result)
+            return result;
+        else
+            return false;
+    } catch (error) {
+        return false;
+    }
+};
+
 const selectAllRecursos = async function() {
     try {
         const result = await prisma.$queryRaw`SELECT * FROM vw_buscar_recursos`;
@@ -96,6 +146,8 @@ module.exports = {
     insertRecurso,
     selectAllRecursos,
     selectRecursosAluno,
+    selectRecursosProfessor,
+    selectRecursosGestao,
     selectByIdRecurso,
     deleteByIdRecurso,
     updateByIdRecurso

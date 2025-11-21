@@ -17,6 +17,52 @@ const inserirRecurso = async function(recurso, contentType) {
     }
 };
 
+const buscarRecursosProfessor = async function(idProfessor, idTurma, idSemestre) {
+    try {
+        if (!idProfessor || isNaN(idProfessor)) {
+            return message.ERROR_REQUIRED_FIELDS;
+        }
+
+        let result = await recursosDAO.selectRecursosProfessor(idProfessor, idTurma, idSemestre);
+
+        if (result && typeof result === 'object' && result.length > 0) {
+            return {
+                status: true,
+                status_code: 200,
+                items: result.length,
+                recursos: result
+            };
+        } else {
+            return message.ERROR_NOT_FOUND;
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER;
+    }
+};
+
+const buscarRecursosGestao = async function(idGestao, idTurma, idMateria, idSemestre) {
+    try {
+        if (!idGestao || isNaN(idGestao)) {
+            return message.ERROR_REQUIRED_FIELDS;
+        }
+
+        let result = await recursosDAO.selectRecursosGestao(idGestao, idTurma, idMateria, idSemestre);
+
+        if (result && typeof result === 'object' && result.length > 0) {
+            return {
+                status: true,
+                status_code: 200,
+                items: result.length,
+                recursos: result
+            };
+        } else {
+            return message.ERROR_NOT_FOUND;
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER;
+    }
+};
+
 const listarRecursos = async function() {
     try {
         let result = await recursosDAO.selectAllRecursos();
@@ -117,6 +163,8 @@ module.exports = {
     listarRecursos,
     buscarRecursoPorId,
     buscarRecursosAluno,
+    buscarRecursosProfessor,
+    buscarRecursosGestao,
     atualizarRecursoPorId,
     excluirRecursoPorId
 };

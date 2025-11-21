@@ -350,6 +350,29 @@ app.get('/v1/analytica-ai/recurso/aluno/:idAluno', async function (request, resp
     response.json(result)
 })
 
+app.get('/v1/analytica-ai/recurso/professor/:idProfessor', async function (request, response){
+    let idProfessor = parseInt(request.params.idProfessor)
+    let idTurma = request.query.turma ? parseInt(request.query.turma) : null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre) : null
+
+    let result = await controllerRecursos.buscarRecursosProfessor(idProfessor, idTurma, idSemestre)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
+app.get('/v1/analytica-ai/recurso/gestao/:idGestao', async function (request, response){
+    let idGestao = parseInt(request.params.idGestao)
+    let idTurma = request.query.turma ? parseInt(request.query.turma) : null
+    let idMateria = request.query.materia ? parseInt(request.query.materia) : null
+    let idSemestre = request.query.semestre ? parseInt(request.query.semestre) : null
+
+    let result = await controllerRecursos.buscarRecursosGestao(idGestao, idTurma, idMateria, idSemestre)
+
+    response.status(result.status_code)
+    response.json(result)
+})
+
 app.get('/v1/analytica-ai/recurso', async function (request, response){
     let result = await controllerRecursos.listarRecursos()
 

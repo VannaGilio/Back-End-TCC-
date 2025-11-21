@@ -1753,6 +1753,55 @@ FROM
     INNER JOIN tbl_turma    t ON r.id_turma     = t.id_turma
     INNER JOIN tbl_semestre s ON r.id_semestre  = s.id_semestre;
 
+-- VIEW RECURSOS POR PROFESSOR (para filtros por professor, turma e semestre)
+DROP VIEW IF EXISTS vw_recursos_professor;
+CREATE VIEW vw_recursos_professor AS
+SELECT
+    p.id_professor,
+    p.nome AS nome_professor,
+    t.id_turma,
+    t.turma,
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia,
+    r.id_semestre,
+    s.semestre
+FROM tbl_turma_professor tp
+JOIN tbl_professor p ON tp.id_professor = p.id_professor
+JOIN tbl_turma t      ON tp.id_turma     = t.id_turma
+JOIN tbl_recursos r   ON r.id_turma      = t.id_turma
+                     AND r.id_professor  = p.id_professor
+JOIN tbl_materia m    ON r.id_materia    = m.id_materia
+JOIN tbl_semestre s   ON r.id_semestre   = s.id_semestre;
+
+-- VIEW RECURSOS POR GESTÃO (para filtros por gestão, turma, matéria e semestre)
+DROP VIEW IF EXISTS vw_recursos_gestao;
+CREATE VIEW vw_recursos_gestao AS
+SELECT
+    g.id_gestao,
+    g.nome AS nome_gestao,
+    t.id_turma,
+    t.turma,
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia,
+    r.id_semestre,
+    s.semestre
+FROM tbl_gestao_turma gt
+JOIN tbl_gestao g     ON gt.id_gestao = g.id_gestao
+JOIN tbl_turma t      ON gt.id_turma  = t.id_turma
+JOIN tbl_recursos r   ON r.id_turma   = t.id_turma
+JOIN tbl_materia m    ON r.id_materia = m.id_materia
+JOIN tbl_semestre s   ON r.id_semestre = s.id_semestre;
+
 -- VIEW RECURSOS POR ALUNO (para filtros por aluno, matéria e semestre)
 DROP VIEW IF EXISTS vw_recursos_aluno;
 CREATE VIEW vw_recursos_aluno AS

@@ -6,7 +6,7 @@ const inserirRecurso = async function(recurso, contentType) {
         if (String(contentType).toLowerCase() !== 'application/json') {
             return message.ERROR_CONTENT_TYPE;
         }
-        if (!recurso.titulo || !recurso.data_criacao || !recurso.id_materia || !recurso.id_professor || !recurso.id_turma || !recurso.id_semestre || !recurso.link_criterio) {
+        if (!recurso.titulo || !recurso.data_criacao || !recurso.id_professor || !recurso.id_turma || !recurso.id_semestre || !recurso.link_criterio) {
             return message.ERROR_REQUIRED_FIELDS;
         }
         let result = await recursosDAO.insertRecurso(recurso);
@@ -125,7 +125,7 @@ const atualizarRecursoPorId = async function(id, recurso, contentType) {
     try {
         if (String(contentType).toLowerCase() !== 'application/json') return message.ERROR_CONTENT_TYPE;
         if (!id || isNaN(id)) return message.ERROR_REQUIRED_FIELDS;
-        if (!recurso.titulo || !recurso.data_criacao || !recurso.id_materia || !recurso.id_professor || !recurso.id_turma || !recurso.id_semestre || !recurso.link_criterio) {
+        if (!recurso.titulo || !recurso.data_criacao || !recurso.id_professor || !recurso.id_turma || !recurso.id_semestre || !recurso.link_criterio) {
             return message.ERROR_REQUIRED_FIELDS;
         }
         recurso.id_recursos = parseInt(id);

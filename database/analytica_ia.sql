@@ -1747,13 +1747,29 @@ CREATE PROCEDURE sp_inserir_recurso (
     IN p_titulo        VARCHAR(45),
     IN p_descricao     VARCHAR(255),
     IN p_data_criacao  DATE,
-    IN p_id_materia    INT,
     IN p_id_professor  INT,
     IN p_id_turma      INT,
     IN p_id_semestre   INT,
     IN p_link_criterio VARCHAR(255)
 )
 BEGIN
+    DECLARE v_id_materia INT;
+
+    -- Descobre a matéria que o professor leciona para essa turma
+    SELECT DISTINCT a.id_materia
+    INTO v_id_materia
+    FROM tbl_atividade a
+    JOIN tbl_turma_professor tp
+        ON tp.id_professor = a.id_professor
+    WHERE a.id_professor = p_id_professor
+      AND tp.id_turma = p_id_turma
+    LIMIT 1;
+
+    IF v_id_materia IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'PROFESSOR_NAO_ASSOCIADO_MATERIA_TURMA';
+    END IF;
+
     INSERT INTO tbl_recursos (
         titulo,
         descricao,
@@ -1767,14 +1783,13 @@ BEGIN
         p_titulo,
         p_descricao,
         p_data_criacao,
-        p_id_materia,
+        v_id_materia,
         p_id_professor,
         p_id_turma,
         p_id_semestre,
         p_link_criterio
     );
 END $$
-
 DELIMITER ;
 
 --VIEW RECURSOS

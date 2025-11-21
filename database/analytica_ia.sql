@@ -10,6 +10,12 @@ CREATE TABLE tbl_usuarios (
     nivel_usuario ENUM('aluno', 'professor', 'gestão') NOT NULL
 );
 
+-- ALTERAÇÃO TABELA DE USUÁRIOS
+ALTER TABLE tbl_usuarios
+ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
+ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
+
+
 CREATE TABLE tbl_semestre (
     id_semestre INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     semestre VARCHAR(45) NOT NULL
@@ -496,6 +502,8 @@ BEGIN
     );
 END $
 
+------------------
+
 -- PROCEDURE - SALVANDO TOKEN DE RECUPERAÇÃO
 DELIMITER $$
 DROP PROCEDURE IF EXISTS sp_gerar_token_recuperacao;
@@ -549,6 +557,8 @@ SELECT 'FALHA_TOKEN_INVALIDO_OU_EXPIRADO' AS status_reset;
 END IF;
 END$$
 DELIMITER ;
+
+--------------------------
 
 -- CADASTRO DE USUÁRIO
 DELIMITER $
@@ -673,9 +683,11 @@ END $$
 
 -- --------------------------------------------------------------
 
+USE db_analytica_ai;
+
 -- VIEW USUARIO 
-DROP VIEW IF EXISTS vw_listar_usuarios;
-CREATE VIEW vw_listar_usuarios AS
+DROP VIEW IF EXISTS vw_buscar_usuarios;
+CREATE VIEW vw_buscar_usuarios AS
 SELECT
     id_usuario,
 	credencial,
@@ -715,6 +727,46 @@ SELECT
     id_turma,
     turma
 FROM tbl_turma;
+
+-- VIEW ALUNO
+DROP VIEW IF EXISTS vw_buscar_aluno; 
+CREATE VIEW vw_buscar_aluno AS 
+SELECT 
+    a.id_aluno, 
+    u.id_usuario, u.credencial, t.id_turma, 
+    t.turma AS turma, 
+    a.nome AS nome, 
+    a.matricula, 
+    a.telefone, 
+    a.email, 
+    a.data_nascimento 
+FROM tbl_aluno a 
+JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
+JOIN tbl_turma t ON a.id_turma = t.id_turma; 
+
+-- VIEW GESTÃO
+DROP VIEW IF EXISTS vw_buscar_gestao;
+CREATE VIEW  vw_buscar_gestao AS
+SELECT
+    g.id_gestao,
+    u.id_usuario,
+    g.nome,
+    g.email,
+    g.telefone
+FROM tbl_gestao g
+JOIN tbl_usuarios u ON g.id_usuario = u.id_usuario;
+
+-- VIEW PROFESSOR
+DROP VIEW IF EXISTS vw_buscar_professor;
+CREATE VIEW  vw_buscar_professor AS
+SELECT
+    p.id_professor,
+    u.id_usuario,
+    p.nome,
+    p.email,
+    p.telefone
+FROM tbl_professor p
+JOIN tbl_usuarios u ON p.id_usuario = u.id_usuario;
 
 -- -------------------------------
 
@@ -804,6 +856,35 @@ LEFT JOIN vw_frequencia_por_aluno_materia f
    AND f.id_semestre = n.id_semestre;
 
 -- ------------------------------------------------------------
+
+-- VIEW FREQUENCIA MEDIA TURMA MATERIA SEMESTRE
+
+DROP VIEW IF EXISTS vw_frequencia_turma_materia;
+CREATE OR REPLACE VIEW vw_frequencia_turma_materia AS
+SELECT 
+    t.id_turma,
+    t.turma,
+    m.id_materia,
+    m.materia,
+    f.id_semestre,
+    
+    CAST(SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS SIGNED) AS total_presenca,
+    CAST(SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS SIGNED) AS total_falta,
+    CAST(COUNT(*) AS SIGNED) AS total_aulas,
+    
+    CONCAT(
+        ROUND(
+            IF(COUNT(*) = 0, 0,
+               AVG(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) * 100
+            ), 2), '%'
+    ) AS frequencia_turma_materia
+FROM 
+    tbl_frequencia f
+INNER JOIN tbl_materia m ON f.id_materia = m.id_materia
+INNER JOIN tbl_aluno a ON f.id_aluno = a.id_aluno
+INNER JOIN tbl_turma t ON a.id_turma = t.id_turma
+GROUP BY 
+    t.id_turma, t.turma, m.id_materia, m.materia, f.id_semestre;
 
 -- VIEW MEDIA ATIVIDADES TURMA - DOCENTE
 
@@ -939,36 +1020,6 @@ GROUP BY
     c.categoria,
     n.id_semestre;
 
-
--- VIEW FREQUENCIA MEDIA TURMA MATERIA SEMESTRE
-
-DROP VIEW IF EXISTS vw_frequencia_turma_materia;
-CREATE OR REPLACE VIEW vw_frequencia_turma_materia AS
-SELECT 
-    t.id_turma,
-    t.turma,
-    m.id_materia,
-    m.materia,
-    f.id_semestre,
-    
-    CAST(SUM(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) AS SIGNED) AS total_presenca,
-    CAST(SUM(CASE WHEN f.presenca = 0 THEN 1 ELSE 0 END) AS SIGNED) AS total_falta,
-    CAST(COUNT(*) AS SIGNED) AS total_aulas,
-    
-    CONCAT(
-        ROUND(
-            IF(COUNT(*) = 0, 0,
-               AVG(CASE WHEN f.presenca = 1 THEN 1 ELSE 0 END) * 100
-            ), 2), '%'
-    ) AS frequencia_turma_materia
-FROM 
-    tbl_frequencia f
-INNER JOIN tbl_materia m ON f.id_materia = m.id_materia
-INNER JOIN tbl_aluno a ON f.id_aluno = a.id_aluno
-INNER JOIN tbl_turma t ON a.id_turma = t.id_turma
-GROUP BY 
-    t.id_turma, t.turma, m.id_materia, m.materia, f.id_semestre;
-
 -- VIEW MEDIA DA MEDIA TURMA
   
  DROP VIEW IF EXISTS vw_media_turma_materia;
@@ -1046,13 +1097,10 @@ SELECT
     a.telefone, 
     a.email, 
     a.data_nascimento 
-FROM tbl_aluno a JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
+FROM tbl_aluno a 
+JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
 JOIN tbl_turma t ON a.id_turma = t.id_turma; 
 
--- ALTERAÇÃO TABELA DE USUÁRIOS
-ALTER TABLE tbl_usuarios
-ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
-ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
 
 -- VIEW - BUSCA DE USUÁRIO PELA CREDENCIAL
 CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS

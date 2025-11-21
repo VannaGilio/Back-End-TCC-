@@ -622,8 +622,8 @@ END $$
 -- --------------------------------------------------------------
 
 -- VIEW USUARIO 
-DROP VIEW IF EXISTS vw_listar_usuarios;
-CREATE VIEW vw_listar_usuarios AS
+DROP VIEW IF EXISTS vw_buscar_usuarios;
+CREATE VIEW vw_buscar_usuarios AS
 SELECT
     id_usuario,
 	credencial,
@@ -663,6 +663,46 @@ SELECT
     id_turma,
     turma
 FROM tbl_turma;
+
+-- VIEW ALUNO
+DROP VIEW IF EXISTS vw_buscar_aluno; 
+CREATE VIEW vw_buscar_aluno AS 
+SELECT 
+    a.id_aluno, 
+    u.id_usuario, u.credencial, t.id_turma, 
+    t.turma AS turma, 
+    a.nome AS nome, 
+    a.matricula, 
+    a.telefone, 
+    a.email, 
+    a.data_nascimento 
+FROM tbl_aluno a 
+JOIN tbl_usuarios u ON a.id_usuario = u.id_usuario 
+JOIN tbl_turma t ON a.id_turma = t.id_turma; 
+
+-- VIEW GESTÃO
+DROP VIEW IF EXISTS vw_buscar_gestao;
+CREATE VIEW  vw_buscar_gestao AS
+SELECT
+    g.id_gestao,
+    u.id_usuario,
+    g.nome,
+    g.email,
+    g.telefone
+FROM tbl_gestao g
+JOIN tbl_usuarios u ON g.id_usuario = u.id_usuario
+
+-- VIEW PROFESSOR
+DROP VIEW IF EXISTS vw_buscar_professor;
+CREATE VIEW  vw_buscar_professor AS
+SELECT
+    p.id_professor,
+    u.id_usuario,
+    p.nome,
+    p.email,
+    p.telefone
+FROM tbl_professor p
+JOIN tbl_usuarios u ON p.id_usuario = u.id_usuario
 
 -- -------------------------------
 
@@ -981,6 +1021,419 @@ LEFT JOIN
 
 -- --------------------------
 
+--VIEW ATIVIDADES
+DROP VIEW IF EXISTS vw_buscar_atividades
+CREATE VIEW vw_buscar_atividades AS
+SELECT 
+    a.id_atividade,
+    a.titulo,
+    a.descricao,
+    a.data_criacao,
+    a.id_materia,
+    m.materia AS materia,
+    a.id_professor,
+    p.nome AS nome,
+    a.id_categoria,
+    c.categoria AS categoria
+FROM 
+    tbl_atividade a
+    INNER JOIN tbl_materia m ON a.id_materia = m.id_materia
+    INNER JOIN tbl_professor p ON a.id_professor = p.id_professor
+    INNER JOIN tbl_categoria c ON a.id_categoria = c.id_categoria;
+
+--PROCEDURE ATIVIDADES 
+DELIMITER $$
+
+CREATE PROCEDURE sp_inserir_atividade(
+    IN p_titulo VARCHAR(45),
+    IN p_descricao VARCHAR(255),
+    IN p_data_criacao DATE,
+    IN p_id_materia INT,
+    IN p_id_professor INT,
+    IN p_id_categoria INT
+)
+BEGIN
+    INSERT INTO tbl_atividade (
+        titulo, descricao, data_criacao, id_materia, id_professor, id_categoria
+    ) VALUES (
+        p_titulo, p_descricao, p_data_criacao, p_id_materia, p_id_professor, p_id_categoria
+    );
+END $$
+
+DELIMITER ;
+
+--PROCEDURE RECURSOS
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS sp_inserir_recurso $$
+CREATE PROCEDURE sp_inserir_recurso (
+    IN p_titulo        VARCHAR(45),
+    IN p_descricao     VARCHAR(255),
+    IN p_data_criacao  DATE,
+    IN p_id_materia    INT,
+    IN p_id_professor  INT,
+    IN p_id_turma      INT,
+    IN p_id_semestre   INT,
+    IN p_link_criterio VARCHAR(255)
+)
+BEGIN
+    INSERT INTO tbl_recursos (
+        titulo,
+        descricao,
+        data_criacao,
+        id_materia,
+        id_professor,
+        id_turma,
+        id_semestre,
+        link_criterio
+    ) VALUES (
+        p_titulo,
+        p_descricao,
+        p_data_criacao,
+        p_id_materia,
+        p_id_professor,
+        p_id_turma,
+        p_id_semestre,
+        p_link_criterio
+    );
+END $$
+
+DELIMITER ;
+
+--VIEW RECURSOS
+DROP VIEW IF EXISTS vw_buscar_recursos;
+CREATE VIEW vw_buscar_recursos AS
+SELECT 
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia AS materia,
+    r.id_professor,
+    p.nome AS nome,
+    r.id_turma,
+    t.turma,
+    r.id_semestre,
+    s.semestre
+FROM 
+    tbl_recursos r
+    INNER JOIN tbl_materia  m ON r.id_materia   = m.id_materia
+    INNER JOIN tbl_professor p ON r.id_professor = p.id_professor
+    INNER JOIN tbl_turma    t ON r.id_turma     = t.id_turma
+    INNER JOIN tbl_semestre s ON r.id_semestre  = s.id_semestre;
+
+-- VIEW RECURSOS POR ALUNO (para filtros por aluno, matéria e semestre)
+DROP VIEW IF EXISTS vw_recursos_aluno;
+CREATE VIEW vw_recursos_aluno AS
+SELECT
+    a.id_aluno,
+    a.id_turma,
+    t.turma,
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia,
+    r.id_professor,
+    p.nome AS nome,
+    r.id_semestre,
+    s.semestre
+FROM tbl_aluno a
+JOIN tbl_turma    t ON a.id_turma   = t.id_turma
+JOIN tbl_recursos r ON r.id_turma   = t.id_turma
+JOIN tbl_materia  m ON r.id_materia = m.id_materia
+JOIN tbl_professor p ON r.id_professor = p.id_professor
+JOIN tbl_semestre s ON r.id_semestre  = s.id_semestre;
+
+INSERT INTO tbl_recursos (
+    titulo,
+    descricao,
+    link_criterio,
+    data_criacao,
+    id_materia,
+    id_professor,
+    id_turma,
+    id_semestre
+) VALUES
+-- Matemática (id_materia = 1)
+(
+    'Vídeo - Revisão de Equações do 1º Grau',
+    'Aula de revisão de equações do 1º grau com exemplos passo a passo.',
+    'https://www.youtube.com/watch?v=Z0zKBCV3U2A',
+    '2025-03-01',
+    1,  -- Matemática
+    1,  -- Professor
+    3,  -- Turma
+    1   -- Semestre
+),
+(
+    'Lista de Exercícios - Equações do 2º Grau',
+    'Lista com exercícios de equações do 2º grau para treinar para a prova.',
+    'https://www.youtube.com/watch?v=9T8A89jgeTI',
+    '2025-03-02',
+    1,
+    1,
+    3,
+    1
+),
+(
+    'Vídeo - Funções Afim e Quadrática',
+    'Vídeo explicando a diferença entre função afim e quadrática.',
+    'https://www.youtube.com/watch?v=ZKkG5YcD3SM',
+    '2025-03-03',
+    1,
+    1,
+    3,
+    2
+),
+
+-- Português (id_materia = 2)
+(
+    'Vídeo - Interpretação de Texto Narrativo',
+    'Aula sobre técnicas de interpretação de textos narrativos.',
+    'https://www.youtube.com/watch?v=PZ4pctQM4zA',
+    '2025-03-04',
+    2,  -- Português
+    2,  -- Professor
+    3,
+    1
+),
+(
+    'Critérios de Avaliação - Redação Dissertativa',
+    'Critérios de correção para redações dissertativas argumentativas.',
+    'https://www.youtube.com/watch?v=3M3JZ5d4Z0s',
+    '2025-03-05',
+    2,
+    2,
+    3,
+    2
+),
+(
+    'Vídeo - Coesão e Coerência na Redação',
+    'Explicação sobre coesão e coerência com exemplos práticos.',
+    'https://www.youtube.com/watch?v=s8hWQGz_3No',
+    '2025-03-06',
+    2,
+    2,
+    3,
+    2
+),
+
+-- História (id_materia = 3)
+(
+    'Documentário - Revolução Francesa',
+    'Documentário introdutório sobre a Revolução Francesa.',
+    'https://www.youtube.com/watch?v=E0KpG2K6Xn4',
+    '2025-03-07',
+    3,  -- História
+    3,  -- Professor
+    3,
+    1
+),
+(
+    'Vídeo - Brasil Colônia',
+    'Aula sobre o período colonial no Brasil.',
+    'https://www.youtube.com/watch?v=evqXqgRZ0Vw',
+    '2025-03-08',
+    3,
+    3,
+    3,
+    1
+),
+
+-- Geografia (id_materia = 4)
+(
+    'Vídeo - Climas do Mundo',
+    'Explicação sobre os principais tipos de clima do planeta.',
+    'https://www.youtube.com/watch?v=Ys2uDn0vZ_E',
+    '2025-03-09',
+    4,  -- Geografia
+    3,
+    3,
+    1
+),
+(
+    'Vídeo - Urbanização e Problemas Urbanos',
+    'Aula sobre urbanização, metrópoles e problemas urbanos.',
+    'https://www.youtube.com/watch?v=VgK0tZ1B2cs',
+    '2025-03-10',
+    4,
+    3,
+    3,
+    2
+),
+
+-- Ciências / Biologia (id_materia = 5)
+(
+    'Vídeo - Sistema Digestório',
+    'Vídeo aula sobre o funcionamento do sistema digestório humano.',
+    'https://www.youtube.com/watch?v=8gI5qX2FXSs',
+    '2025-03-11',
+    5,  -- Ciências/Biologia
+    2,
+    3,
+    1
+),
+(
+    'Vídeo - Cadeia Alimentar',
+    'Explicação sobre cadeias e teias alimentares com exemplos simples.',
+    'https://www.youtube.com/watch?v=K3u2aFSkD4M',
+    '2025-03-12',
+    5,
+    2,
+    3,
+    2
+),
+
+-- Inglês (id_materia = 6)
+(
+    'Vídeo - Simple Present Explicado',
+    'Aula em português explicando o uso do Simple Present no inglês.',
+    'https://www.youtube.com/watch?v=F1qOQvYg3qM',
+    '2025-03-13',
+    6,  -- Inglês
+    1,
+    3,
+    1
+),
+(
+    'Playlist - Listening para Iniciantes',
+    'Playlist com exercícios de listening para iniciantes.',
+    'https://www.youtube.com/watch?v=jL8uDJJBjMA&list=PL-listening-iniciantes',
+    '2025-03-14',
+    6,
+    1,
+    3,
+    2
+);
+
+-----------
+
+-- 1.1. vw_ranking_base
+-- Consolida a média final do aluno por matéria e semestre, e calcula o ranking
+DROP VIEW IF EXISTS vw_ranking_base;
+
+CREATE VIEW vw_ranking_base AS
+SELECT
+    A.id_aluno,
+    A.nome AS nome_aluno,
+    A.id_turma,
+    T.turma,
+    M.id_materia,
+    M.materia,
+    VS.id_semestre,
+    VS.semestre,
+    -- Calcula a média geral das atividades do aluno na matéria/semestre
+    CAST(ROUND(AVG(N.nota), 2) AS DECIMAL(10, 2)) AS media_consolidada,
+    -- Calcula a posição no ranking (a posição 1 é a maior nota)
+    DENSE_RANK() OVER (
+        PARTITION BY VS.id_semestre, M.id_materia, A.id_turma 
+        ORDER BY AVG(N.nota) DESC
+    ) AS posicao_ranking
+FROM
+    tbl_aluno A
+JOIN 
+    tbl_turma T ON A.id_turma = T.id_turma
+JOIN 
+    tbl_atividade_aluno AA ON A.id_aluno = AA.id_aluno
+JOIN 
+    tbl_atividade AT ON AA.id_atividade = AT.id_atividade
+JOIN 
+    tbl_materia M ON AT.id_materia = M.id_materia
+JOIN 
+    tbl_nota N ON AA.id_atividade_aluno = N.id_atividade_aluno
+JOIN 
+    tbl_semestre VS ON N.id_semestre = VS.id_semestre
+GROUP BY
+    A.id_aluno, A.nome, A.id_turma, T.turma, M.id_materia, VS.id_semestre
+ORDER BY
+    VS.id_semestre, M.id_materia, A.id_turma, media_consolidada DESC;
+
+
+-- 1.2. vw_ranking_professor
+-- Adiciona o ID do professor para filtros de segurança
+DROP VIEW IF EXISTS vw_ranking_professor;
+
+CREATE VIEW vw_ranking_professor AS
+SELECT
+    A.id_professor,
+    RB.id_aluno,
+    RB.nome_aluno,
+    RB.id_turma,
+    RB.turma,
+    RB.id_materia,
+    RB.materia,
+    RB.id_semestre,
+    RB.media_consolidada,
+    RB.posicao_ranking
+FROM
+    vw_ranking_base RB
+JOIN
+    -- Encontra o ID do professor que criou a atividade naquela matéria
+    (SELECT DISTINCT id_materia, id_professor FROM tbl_atividade) A 
+    ON RB.id_materia = A.id_materia
+JOIN
+    -- Garante que o professor leciona na turma em questão (filtro de acesso)
+    tbl_turma_professor TP 
+    ON RB.id_turma = TP.id_turma AND A.id_professor = TP.id_professor;
+
+
+-- 1.3. vw_ranking_gestao
+-- Adiciona o ID da gestão para filtros de segurança
+DROP VIEW IF EXISTS vw_ranking_gestao;
+
+CREATE VIEW vw_ranking_gestao AS
+SELECT
+    GT.id_gestao,
+    RB.*
+FROM
+    vw_ranking_base RB
+JOIN
+    tbl_gestao_turma GT ON RB.id_turma = GT.id_turma;
+
+
+-- =================================================================
+-- 2. FUNÇÃO DE CENSURA (Exclusiva para a visão do Aluno)
+-- =================================================================
+
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS fn_censurar_nome_aluno;
+
+CREATE FUNCTION fn_censurar_nome_aluno (
+    nome_completo VARCHAR(255),
+    id_aluno_ranking INT,
+    id_aluno_logado INT
+)
+RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+    DECLARE nome_censurado VARCHAR(255);
+
+    -- Se for o aluno logado, retorna o nome completo.
+    IF id_aluno_ranking = id_aluno_logado THEN
+        RETURN nome_completo;
+    ELSE
+        -- Censura: Primeiro Nome + Inicial do Último Nome.
+        -- Ex: 'Lucas Silva' -> 'Lucas S.'
+        SET nome_censurado = CONCAT(
+            SUBSTRING_INDEX(nome_completo, ' ', 1),
+            ' ',
+            LEFT(SUBSTRING_INDEX(nome_completo, ' ', -1), 1),
+            '.'
+        );
+        RETURN nome_censurado;
+    END IF;
+END $$
+
+DELIMITER ;
+
+-------------
+
 -- VIEW ALUNO
 DROP VIEW IF EXISTS vw_buscar_aluno; 
 CREATE VIEW vw_buscar_aluno AS 
@@ -1002,7 +1455,8 @@ ADD COLUMN token_recuperacao VARCHAR(255) NULL AFTER senha,
 ADD COLUMN expiracao_token DATETIME NULL AFTER token_recuperacao;
 
 -- VIEW - BUSCA DE USUÁRIO PELA CREDENCIAL
-CREATE OR REPLACE VIEW vw_buscar_usuario_by_credencial AS
+DROP VIEW IF EXISTS vw_buscar_usuario_by_credencial; 
+CREATE VIEW vw_buscar_usuario_by_credencial AS
 SELECT
 u.id_usuario,
 u.credencial,

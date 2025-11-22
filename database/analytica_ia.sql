@@ -1745,7 +1745,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS sp_inserir_recurso $$
 CREATE PROCEDURE sp_inserir_recurso (
     IN p_titulo        VARCHAR(45),
-    IN p_descricao     VARCHAR(255),
+    IN p_descricao     VARCHAR(255), 
     IN p_data_criacao  DATE,
     IN p_id_professor  INT,
     IN p_id_turma      INT,

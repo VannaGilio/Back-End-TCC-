@@ -1070,13 +1070,29 @@ CREATE PROCEDURE sp_inserir_recurso (
     IN p_titulo        VARCHAR(45),
     IN p_descricao     VARCHAR(255),
     IN p_data_criacao  DATE,
-    IN p_id_materia    INT,
     IN p_id_professor  INT,
     IN p_id_turma      INT,
     IN p_id_semestre   INT,
     IN p_link_criterio VARCHAR(255)
 )
 BEGIN
+    DECLARE v_id_materia INT;
+
+    -- Descobre a matéria que o professor leciona para essa turma
+    SELECT DISTINCT a.id_materia
+    INTO v_id_materia
+    FROM tbl_atividade a
+    JOIN tbl_turma_professor tp
+        ON tp.id_professor = a.id_professor
+    WHERE a.id_professor = p_id_professor
+      AND tp.id_turma = p_id_turma
+    LIMIT 1;
+
+    IF v_id_materia IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'PROFESSOR_NAO_ASSOCIADO_MATERIA_TURMA';
+    END IF;
+
     INSERT INTO tbl_recursos (
         titulo,
         descricao,
@@ -1090,7 +1106,7 @@ BEGIN
         p_titulo,
         p_descricao,
         p_data_criacao,
-        p_id_materia,
+        v_id_materia,
         p_id_professor,
         p_id_turma,
         p_id_semestre,
@@ -1123,6 +1139,55 @@ FROM
     INNER JOIN tbl_professor p ON r.id_professor = p.id_professor
     INNER JOIN tbl_turma    t ON r.id_turma     = t.id_turma
     INNER JOIN tbl_semestre s ON r.id_semestre  = s.id_semestre;
+
+-- VIEW RECURSOS POR PROFESSOR (para filtros por professor, turma e semestre)
+DROP VIEW IF EXISTS vw_recursos_professor;
+CREATE VIEW vw_recursos_professor AS
+SELECT
+    p.id_professor,
+    p.nome AS nome_professor,
+    t.id_turma,
+    t.turma,
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia,
+    r.id_semestre,
+    s.semestre
+FROM tbl_turma_professor tp
+JOIN tbl_professor p ON tp.id_professor = p.id_professor
+JOIN tbl_turma t      ON tp.id_turma     = t.id_turma
+JOIN tbl_recursos r   ON r.id_turma      = t.id_turma
+                     AND r.id_professor  = p.id_professor
+JOIN tbl_materia m    ON r.id_materia    = m.id_materia
+JOIN tbl_semestre s   ON r.id_semestre   = s.id_semestre;
+
+-- VIEW RECURSOS POR GESTÃO (para filtros por gestão, turma, matéria e semestre)
+DROP VIEW IF EXISTS vw_recursos_gestao;
+CREATE VIEW vw_recursos_gestao AS
+SELECT
+    g.id_gestao,
+    g.nome AS nome_gestao,
+    t.id_turma,
+    t.turma,
+    r.id_recursos,
+    r.titulo,
+    r.descricao,
+    r.link_criterio,
+    r.data_criacao,
+    r.id_materia,
+    m.materia,
+    r.id_semestre,
+    s.semestre
+FROM tbl_gestao_turma gt
+JOIN tbl_gestao g     ON gt.id_gestao = g.id_gestao
+JOIN tbl_turma t      ON gt.id_turma  = t.id_turma
+JOIN tbl_recursos r   ON r.id_turma   = t.id_turma
+JOIN tbl_materia m    ON r.id_materia = m.id_materia
+JOIN tbl_semestre s   ON r.id_semestre = s.id_semestre;
 
 -- VIEW RECURSOS POR ALUNO (para filtros por aluno, matéria e semestre)
 DROP VIEW IF EXISTS vw_recursos_aluno;
